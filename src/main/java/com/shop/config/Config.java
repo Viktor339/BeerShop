@@ -7,14 +7,20 @@ import java.io.IOException;
 import java.util.Properties;
 
 public class Config implements ServletContextListener {
+
     private static final String ATTRIBUTE_NAME = "config";
+    private static final String DRIVER = "jdbc.dbcDriver";
+    private static final String PASSWORD = "jdbc.Password";
+    private static final String URL = "jdbc.URL";
+    private static final String USERNAME = "jdbc.Username";
+    private static final String PROPERTIES_FILE_NAME = "application.properties";
     private final Properties config = new Properties();
 
     @Override
     public void contextInitialized(ServletContextEvent event) {
 
         try {
-            config.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("application.properties"));
+            config.load(this.getClass().getClassLoader().getResourceAsStream(PROPERTIES_FILE_NAME));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -30,7 +36,19 @@ public class Config implements ServletContextListener {
         return (Config) context.getAttribute(ATTRIBUTE_NAME);
     }
 
-    public String getProperty(String key) {
-        return config.getProperty(key);
+    public String getDriver() {
+        return config.getProperty(DRIVER);
+    }
+
+    public String getPassword() {
+        return config.getProperty(PASSWORD);
+    }
+
+    public String getURL() {
+        return config.getProperty(URL);
+    }
+
+    public String getUsername() {
+        return config.getProperty(USERNAME);
     }
 }

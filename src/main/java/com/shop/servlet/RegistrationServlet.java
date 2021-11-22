@@ -1,50 +1,60 @@
 package com.shop.servlet;
 
-import com.shop.dao.UserDAO;
 import com.shop.model.User;
+import com.shop.service.EmailValidatorService;
+import com.shop.service.NameValidatorService;
+import com.shop.service.RegistrationService;
+import com.shop.service.ResponseMessage;
+import com.shop.service.ResponseSenderService;
+import com.shop.service.SearchUserWithSameNameOrEmailService;
+import com.shop.service.Validator;
 import com.shop.servlet.request.RegistrationRequest;
-import com.shop.service.UserDataValidatorService;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 
 public class RegistrationServlet extends HttpServlet {
-    public RegistrationServlet() {
+    private final RegistrationRequest registrationRequest;
+
+
+    public RegistrationServlet(RegistrationRequest registrationRequest) {
         super();
+        this.registrationRequest = registrationRequest;
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        InputStreamReader inputStreamReader = new InputStreamReader(req.getInputStream());
-        RegistrationRequest registrationRequest = objectMapper.readValue(inputStreamReader, RegistrationRequest.class);
-
         String name = registrationRequest.getName();
         String password = registrationRequest.getPassword();
         String email = registrationRequest.getEmail();
 
-        UserDataValidatorService userDataValidatorService = new UserDataValidatorService();
-        boolean resultOfValidation = userDataValidatorService.validate(name, email, resp, req);
+        Validator emailValidator = new EmailValidatorService();
+        ResponseMessage emailResponseMessage = emailValidator.validate(email);
+        if (emailResponseMessage != null) {
+            emailResponseMessage.send(resp);
+        }
 
-        if (resultOfValidation) {
+        Validator nameValidator = new NameValidatorService();
+        ResponseMessage nameResponseMessage = nameValidator.validate(name);
+        if (nameResponseMessage != null) {
+            nameResponseMessage.send(resp);
+        }
 
-            UserDAO userDAO = new UserDAO(req.getServletContext());
-            User user = userDAO.saveUser(name, password, email);
+        SearchUserWithSameNameOrEmailService searchUserService = new SearchUserWithSameNameOrEmailService();
+        if (searchUserService.search(name, email, req) != null) {
+            ResponseMessage responseMessage = new ResponseMessage("Username or email already exists", HttpServletResponse.SC_BAD_REQUEST);
+            responseMessage.send(resp);
+        } else {
+            RegistrationService registrationService = new RegistrationService();
+            User user = registrationService.saveUser(name, password, email, req);
 
-            String jsonUser = objectMapper.writeValueAsString(user);
-
-            PrintWriter out = resp.getWriter();
-            resp.setContentType("application/json");
-            resp.setCharacterEncoding("UTF-8");
-            out.print(jsonUser);
-            out.flush();
-
+            ObjectMapper objectMapper = new ObjectMapper();
+            ResponseSenderService responseSenderService = new ResponseSenderService();
+            responseSenderService.send(resp, objectMapper.writeValueAsString(user));
         }
     }
 }

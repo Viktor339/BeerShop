@@ -1,52 +1,60 @@
-package com.shop.dao;
+package com.shop.repository;
 
 import com.shop.config.Config;
 import com.shop.model.User;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import javax.servlet.ServletContext;
-import java.sql.*;
+import java.beans.PropertyVetoException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
-public class UserDAO {
+public class UserRepository {
 
     private static final String SELECT_USER_BY_NAME_AND_PASSWORD = "select * from users where name=? and password=?";
     private static final String SAVE_USER = "insert into users (name,password,email,uuid) values (?,?,?,?)";
-    private Config config;
+    private static final String SAVE_USER_BY_NAME_OR_EMAIL = "select * from users where name =? or email= ?";
+    private static final String NAME="name";
+    private static final String EMAIL="email";
+    private static final String PASSWORD="password";
+    private static final String ROLE="role";
+    private static final String UUID="uuid";
+    private final Config config;
 
-    public UserDAO(ServletContext servletContext) {
+    public UserRepository(ServletContext servletContext) {
         config = Config.getInstance(servletContext);
     }
 
-    protected Connection getConnection() {
+    protected Connection getConnection() throws SQLException {
+
         Connection connection = null;
         try {
-            Class.forName(config.getProperty("jdbc.Driver"));
-            String jdbcPassword = config.getProperty("jdbc.Password");
-            String jdbcURL = config.getProperty("jdbc.URL");
-            String jdbcUsername = config.getProperty("jdbc.Username");
-            connection = DriverManager.getConnection(jdbcURL, jdbcUsername, jdbcPassword);
-        } catch (SQLException | ClassNotFoundException e) {
+            connection = DataSource.getInstance(config).getConnection();
+        } catch (PropertyVetoException e) {
             e.printStackTrace();
         }
         return connection;
     }
 
-    public User getUserByNameOrEmail(String query, String nameOrEmail) {
+    public User getUserByNameOrEmail(String name, String email) {
         User user = null;
         try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setString(1, nameOrEmail);
+             PreparedStatement preparedStatement = connection.prepareStatement(SAVE_USER_BY_NAME_OR_EMAIL)) {
+            preparedStatement.setString(1, name);
+            preparedStatement.setString(2, email);
+
             ResultSet rs = preparedStatement.executeQuery();
 
             while (rs.next()) {
                 user = User.builder()
-                        .name(rs.getString("name"))
-                        .password(rs.getString("password"))
-                        .email(rs.getString("email"))
+                        .name(rs.getString(NAME))
+                        .email(rs.getString(EMAIL))
                         .build();
             }
         } catch (SQLException e) {
-            printSQLException(e);
+            e.printStackTrace();
         }
         return user;
     }
@@ -72,7 +80,7 @@ public class UserDAO {
             preparedStatement.executeQuery();
 
         } catch (SQLException e) {
-            printSQLException(e);
+            e.printStackTrace();
         }
         return user;
     }
@@ -85,38 +93,19 @@ public class UserDAO {
             preparedStatement.setString(1, name);
             preparedStatement.setString(2, password);
 
-            System.out.println(preparedStatement);
             ResultSet rs = preparedStatement.executeQuery();
             while (rs.next()) {
                 user = User.builder()
-                        .name(rs.getString("name"))
-                        .password(rs.getString("password"))
-                        .email(rs.getString("email"))
-                        .role(rs.getString("role"))
-                        .UUID(rs.getString("uuid"))
+                        .name(rs.getString(NAME))
+                        .password(rs.getString(PASSWORD))
+                        .email(rs.getString(EMAIL))
+                        .role(rs.getString(ROLE))
+                        .UUID(rs.getString(UUID))
                         .build();
             }
         } catch (SQLException e) {
-            printSQLException(e);
+            e.printStackTrace();
         }
         return user;
     }
-
-
-    private void printSQLException(SQLException ex) {
-        for (Throwable e : ex) {
-            if (e instanceof SQLException) {
-                e.printStackTrace(System.err);
-                System.err.println("SQLState: " + ((SQLException) e).getSQLState());
-                System.err.println("Error Code: " + ((SQLException) e).getErrorCode());
-                System.err.println("Message: " + e.getMessage());
-                Throwable t = ex.getCause();
-                while (t != null) {
-                    System.out.println("Cause: " + t);
-                    t = t.getCause();
-                }
-            }
-        }
-    }
-
 }
