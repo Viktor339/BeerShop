@@ -11,7 +11,7 @@
   </servlet-mapping>
   <servlet>
     <servlet-name>DoAllServlet</servlet-name>
-    <servlet-class>com.shop.servlet.DoAllServlet</servlet-class>
+    <servlet-class>com.shop.servlet.action.DoAllServlet</servlet-class>
   </servlet>
 
   <!--AuthFilter-->

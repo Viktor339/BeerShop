@@ -1,6 +1,8 @@
 package com.shop.filter;
 
-import com.shop.service.ResponseMessage;
+import com.shop.service.Response;
+import com.shop.service.message.InfoMessage;
+import com.shop.service.message.Message;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -32,13 +34,14 @@ public class AuthFilter implements Filter {
         final HttpSession session = req.getSession(false);
 
         String path = req.getRequestURI().substring(req.getContextPath().length());
-        ResponseMessage responseMessage = new ResponseMessage();
+        Response responseMessage = new Response();
+        Message infoMessage = new InfoMessage();
 
         if (path.startsWith("/login") | path.startsWith("/registration")) {
             res.sendRedirect("/doAllServlet");
         } else {
             if (session == null) {
-                responseMessage.send(res, "Please sign in", HttpServletResponse.SC_BAD_REQUEST);
+                responseMessage.send(res, infoMessage.build("Please sign in"), HttpServletResponse.SC_BAD_REQUEST);
             } else {
 
                 if (session.getAttribute("role").equals("user")) {
@@ -53,7 +56,7 @@ public class AuthFilter implements Filter {
                     }
                 }
 
-                responseMessage.send(res, "access denied ", HttpServletResponse.SC_BAD_REQUEST);
+                responseMessage.send(res, infoMessage.build("access denied "), HttpServletResponse.SC_BAD_REQUEST);
             }
         }
     }
