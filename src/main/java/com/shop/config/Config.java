@@ -1,14 +1,11 @@
 package com.shop.config;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
-public class Config implements ServletContextListener {
+public class Config {
 
-    private static final String ATTRIBUTE_NAME = "config";
     private static final String DRIVER = "jdbc.dbcDriver";
     private static final String PASSWORD = "jdbc.Password";
     private static final String URL = "jdbc.URL";
@@ -16,24 +13,13 @@ public class Config implements ServletContextListener {
     private static final String PROPERTIES_FILE_NAME = "application.properties";
     private final Properties config = new Properties();
 
-    @Override
-    public void contextInitialized(ServletContextEvent event) {
-
+    public Config() {
+        InputStream input = Config.class.getClassLoader().getResourceAsStream(PROPERTIES_FILE_NAME);
         try {
-            config.load(this.getClass().getClassLoader().getResourceAsStream(PROPERTIES_FILE_NAME));
+            config.load(input);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        event.getServletContext().setAttribute(ATTRIBUTE_NAME, this);
-    }
-
-    @Override
-    public void contextDestroyed(ServletContextEvent event) {
-        // NOOP
-    }
-
-    public static Config getInstance(ServletContext context) {
-        return (Config) context.getAttribute(ATTRIBUTE_NAME);
     }
 
     public String getDriver() {

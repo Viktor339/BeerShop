@@ -1,8 +1,12 @@
 package com.shop.servlet.action;
 
+import com.shop.repository.UserRepository;
+import com.shop.service.LoginService;
+import com.shop.service.RegistrationService;
 import com.shop.service.Response;
+import com.shop.service.exception.UnableToExecuteQueryException;
+import com.shop.service.exception.UnableToGetConnectionException;
 import com.shop.service.message.InfoMessage;
-import com.shop.service.message.Message;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -18,10 +22,11 @@ public class DoAllServlet extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
+        UserRepository userRepository = new UserRepository();
         super.init();
         actions = Arrays.asList(
-                new RegistrationAction(),
-                new LoginAction()
+                new RegistrationAction(new RegistrationService(userRepository)),
+                new LoginAction(new LoginService(userRepository))
         );
     }
 
@@ -34,10 +39,10 @@ public class DoAllServlet extends HttpServlet {
                     .findFirst()
                     .get();
             action.doAction(req, resp);
-        } catch (NoSuchElementException e) {
-            Response response = new Response();
-            Message message = new InfoMessage();
-            response.send(resp, message.build("Action not found"), HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        } catch (NoSuchElementException |
+                UnableToExecuteQueryException |
+                UnableToGetConnectionException e) {
+            new Response().send(resp, new InfoMessage().build(e.getMessage()), HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 }

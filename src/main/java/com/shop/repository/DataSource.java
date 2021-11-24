@@ -13,18 +13,22 @@ public class DataSource {
     private final ComboPooledDataSource connectionPool;
 
 
-    private DataSource(Config config) throws PropertyVetoException {
-        connectionPool = new ComboPooledDataSource();
-        connectionPool.setDriverClass(config.getDriver());
-        connectionPool.setJdbcUrl(config.getURL());
-        connectionPool.setUser(config.getUsername());
-        connectionPool.setPassword(config.getPassword());
-        connectionPool.setMinPoolSize(5);
-        connectionPool.setAcquireIncrement(5);
-        connectionPool.setMaxPoolSize(20);
+    private DataSource(Config config) {
+            connectionPool = new ComboPooledDataSource();
+        try {
+            connectionPool.setDriverClass(config.getDriver());
+            connectionPool.setJdbcUrl(config.getURL());
+            connectionPool.setUser(config.getUsername());
+            connectionPool.setPassword(config.getPassword());
+            connectionPool.setMinPoolSize(5);
+            connectionPool.setAcquireIncrement(5);
+            connectionPool.setMaxPoolSize(20);
+        } catch (PropertyVetoException e) {
+            e.printStackTrace();
+        }
     }
 
-    public static DataSource getInstance(Config config) throws PropertyVetoException {
+    public static DataSource getInstance(Config config) {
         if (datasource == null) {
             datasource = new DataSource(config);
         }
@@ -32,7 +36,7 @@ public class DataSource {
     }
 
     public Connection getConnection() throws SQLException {
-        return this.connectionPool.getConnection();
+            return this.connectionPool.getConnection();
     }
 
 }

@@ -13,15 +13,15 @@ import java.util.Map;
 public class Response {
     public static final String HEADER_TYPE = "Content-Type";
     public static final String CONTENT_TYPE = "application/json";
-    private Map<String,String> message;
+     Map<String, String> message;
     private int code;
 
 
-    public void send(HttpServletResponse resp, Map<String,String> message, int code) throws IOException {
-        responseBuilder(resp,message, code);
+    public void send(HttpServletResponse resp, Map<String, String> message, int code) throws IOException {
+        responseBuilder(resp, message, code);
     }
 
-    private void responseBuilder(HttpServletResponse resp,Map<String,String> message, int code) throws IOException {
+    private void responseBuilder(HttpServletResponse resp, Map<String, String> message, int code) throws IOException {
 
         String json = new ObjectMapper().writeValueAsString(message);
         resp.resetBuffer();
