@@ -1,29 +1,27 @@
 package com.shop.service;
 
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Map;
 
-@NoArgsConstructor
 @Data
+@RequiredArgsConstructor
 public class Response {
     public static final String HEADER_TYPE = "Content-Type";
     public static final String CONTENT_TYPE = "application/json";
-     Map<String, String> message;
-    private int code;
+    private final ObjectMapper objectMapper;
 
 
-    public void send(HttpServletResponse resp, Map<String, String> message, int code) throws IOException {
-        responseBuilder(resp, message, code);
+    public void send(HttpServletResponse resp, Object dto, int code) throws IOException {
+        responseBuilder(resp, dto, code);
     }
 
-    private void responseBuilder(HttpServletResponse resp, Map<String, String> message, int code) throws IOException {
+    private void responseBuilder(HttpServletResponse resp, Object dto, int code) throws IOException {
 
-        String json = new ObjectMapper().writeValueAsString(message);
+        String json = objectMapper.writeValueAsString(dto);
         resp.resetBuffer();
         resp.setStatus(code);
         resp.setHeader(HEADER_TYPE, CONTENT_TYPE);

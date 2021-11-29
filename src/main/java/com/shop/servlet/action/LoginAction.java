@@ -1,11 +1,11 @@
 package com.shop.servlet.action;
 
 import com.shop.model.User;
+import com.shop.service.JSONParseService;
 import com.shop.service.LoginService;
-import com.shop.service.RequestBuilderService;
 import com.shop.service.Response;
-import com.shop.service.exception.IncorrectUsernameOrPasswordException;
-import com.shop.service.message.InfoMessage;
+import com.shop.service.exception.UserNotFoundException;
+import com.shop.servlet.dto.InformationResponse;
 import com.shop.servlet.request.LoginRequest;
 import lombok.RequiredArgsConstructor;
 
@@ -16,6 +16,8 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class LoginAction implements Action {
     private final LoginService loginService;
+    private final JSONParseService jsonParseService;
+    private final Response response;
 
     @Override
     public boolean isValid(HttpServletRequest req) {
@@ -26,24 +28,23 @@ public class LoginAction implements Action {
 
     @Override
     public void doAction(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-
-        LoginRequest loginRequest = new RequestBuilderService().build(req, LoginRequest.class);
+        LoginRequest loginRequest = jsonParseService.parseFromJson(req.getInputStream(), LoginRequest.class);
 
         try {
             User user = loginService.login(loginRequest);
 
             if (user.getRole().equals("user")) {
                 req.getSession().setAttribute("role", "user");
-                new Response().send(resp, new InfoMessage().build("You have successfully logged in like user"), HttpServletResponse.SC_OK);
+                response.send(resp, new InformationResponse("You have successfully logged in like user"), HttpServletResponse.SC_OK);
             }
 
             if (user.getRole().equals("admin")) {
                 req.getSession().setAttribute("role", "admin");
-                new Response().send(resp, new InfoMessage().build("You have successfully logged in like admin"), HttpServletResponse.SC_OK);
+                response.send(resp, new InformationResponse("You have successfully logged in like admin"), HttpServletResponse.SC_OK);
             }
 
-        } catch (IncorrectUsernameOrPasswordException e) {
-            new Response().send(resp, new InfoMessage().build(e.getMessage()), e.getErrorCode());
+        } catch (UserNotFoundException e) {
+            response.send(resp, new InformationResponse(e.getMessage()), HttpServletResponse.SC_BAD_REQUEST);
         }
     }
 }

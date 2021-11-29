@@ -1,8 +1,8 @@
 package com.shop.filter;
 
 import com.shop.service.Response;
-import com.shop.service.message.InfoMessage;
-import com.shop.service.message.Message;
+import com.shop.servlet.dto.InformationResponse;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -17,31 +17,29 @@ import java.io.IOException;
 
 
 public class AuthFilter implements Filter {
+    private Response responseMessage;
 
     @Override
     public void init(FilterConfig filterConfig) {
+        responseMessage = new Response(new ObjectMapper());
     }
 
     @Override
     public void doFilter(final ServletRequest request,
                          final ServletResponse response,
-                         final FilterChain filterChain)
-
-            throws IOException, ServletException {
+                         final FilterChain filterChain) throws IOException, ServletException {
 
         final HttpServletRequest req = (HttpServletRequest) request;
         final HttpServletResponse res = (HttpServletResponse) response;
         final HttpSession session = req.getSession(false);
 
         String path = req.getRequestURI().substring(req.getContextPath().length());
-        Response responseMessage = new Response();
-        Message infoMessage = new InfoMessage();
 
         if (path.startsWith("/login") | path.startsWith("/registration")) {
             res.sendRedirect("/doAllServlet");
         } else {
             if (session == null) {
-                responseMessage.send(res, infoMessage.build("Please sign in"), HttpServletResponse.SC_BAD_REQUEST);
+                responseMessage.send(res, new InformationResponse("Please sign in"), HttpServletResponse.SC_BAD_REQUEST);
             } else {
 
                 if (session.getAttribute("role").equals("user")) {
@@ -56,7 +54,7 @@ public class AuthFilter implements Filter {
                     }
                 }
 
-                responseMessage.send(res, infoMessage.build("access denied "), HttpServletResponse.SC_BAD_REQUEST);
+                responseMessage.send(res, new InformationResponse("access denied"), HttpServletResponse.SC_BAD_REQUEST);
             }
         }
     }

@@ -1,12 +1,17 @@
 package com.shop.servlet.action;
 
 import com.shop.repository.UserRepository;
+import com.shop.service.JSONParseService;
 import com.shop.service.LoginService;
 import com.shop.service.RegistrationService;
 import com.shop.service.Response;
+import com.shop.service.exception.ActionNotFoundException;
+import com.shop.service.exception.ConfigException;
 import com.shop.service.exception.UnableToExecuteQueryException;
 import com.shop.service.exception.UnableToGetConnectionException;
-import com.shop.service.message.InfoMessage;
+import com.shop.service.exception.UnacceptableDatabaseDriverException;
+import com.shop.servlet.dto.InformationResponse;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -15,18 +20,21 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 public class DoAllServlet extends HttpServlet {
     private List<Action> actions;
+    private Response response;
 
     @Override
     public void init() throws ServletException {
-        UserRepository userRepository = new UserRepository();
         super.init();
+        ObjectMapper objectMapper = new ObjectMapper();
+        UserRepository userRepository = new UserRepository();
+        JSONParseService jsonParseService = new JSONParseService(objectMapper);
+        response = new Response(objectMapper);
         actions = Arrays.asList(
-                new RegistrationAction(new RegistrationService(userRepository)),
-                new LoginAction(new LoginService(userRepository))
+                new RegistrationAction(new RegistrationService(userRepository), jsonParseService, response),
+                new LoginAction(new LoginService(userRepository),jsonParseService, response)
         );
     }
 
@@ -37,12 +45,15 @@ public class DoAllServlet extends HttpServlet {
             final Action action = actions.stream()
                     .filter(act -> act.isValid(req))
                     .findFirst()
-                    .get();
+                    .orElseThrow(() -> new ActionNotFoundException("Action not found"));
             action.doAction(req, resp);
-        } catch (NoSuchElementException |
+
+        } catch (ActionNotFoundException |
                 UnableToExecuteQueryException |
-                UnableToGetConnectionException e) {
-            new Response().send(resp, new InfoMessage().build(e.getMessage()), HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                UnableToGetConnectionException |
+                UnacceptableDatabaseDriverException |
+                ConfigException e) {
+            response.send(resp, new InformationResponse(e.getMessage()), HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 }

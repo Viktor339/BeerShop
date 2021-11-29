@@ -1,16 +1,12 @@
 package com.shop.servlet.action;
 
+import com.shop.service.JSONParseService;
 import com.shop.service.RegistrationService;
-import com.shop.service.RequestBuilderService;
 import com.shop.service.Response;
-import com.shop.service.exception.IncorrectEmailException;
-import com.shop.service.exception.MailNotFoundException;
-import com.shop.service.exception.NameNotFoundException;
 import com.shop.service.exception.UserAlreadyExistsException;
 import com.shop.service.exception.ValidatorException;
-import com.shop.service.exception.ValidatorNotFoundException;
-import com.shop.service.message.InfoMessage;
-import com.shop.service.message.UserMessage;
+import com.shop.servlet.dto.InformationResponse;
+import com.shop.servlet.dto.UserRegistrationResponse;
 import com.shop.servlet.request.RegistrationRequest;
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +17,8 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class RegistrationAction implements Action {
     private final RegistrationService registrationService;
+    private final JSONParseService jsonParseService;
+    private final Response response;
 
     @Override
     public boolean isValid(HttpServletRequest req) {
@@ -31,20 +29,15 @@ public class RegistrationAction implements Action {
 
     @Override
     public void doAction(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        RegistrationRequest registrationRequest = new RequestBuilderService().build(req, RegistrationRequest.class);
+        RegistrationRequest registrationRequest = jsonParseService.parseFromJson(req.getInputStream(), RegistrationRequest.class);
 
         try {
             String userUUID = registrationService.register(registrationRequest);
-            new Response().send(res, new UserMessage().build(userUUID), HttpServletResponse.SC_OK);
+            response.send(res, new UserRegistrationResponse(userUUID), HttpServletResponse.SC_OK);
 
-        } catch (ValidatorNotFoundException |
-                MailNotFoundException |
-                IncorrectEmailException |
-                NameNotFoundException |
-                ValidatorException |
+        } catch (ValidatorException |
                 UserAlreadyExistsException e) {
-            new Response().send(res, new InfoMessage().build(e.getMessage()), HttpServletResponse.SC_BAD_REQUEST);
-
+            response.send(res, new InformationResponse(e.getMessage()), HttpServletResponse.SC_BAD_REQUEST);
         }
     }
 }

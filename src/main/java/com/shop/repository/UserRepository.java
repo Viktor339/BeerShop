@@ -4,8 +4,8 @@ import com.shop.config.Config;
 import com.shop.model.User;
 import com.shop.service.exception.UnableToExecuteQueryException;
 import com.shop.service.exception.UnableToGetConnectionException;
+import com.shop.service.exception.UserNotFoundException;
 
-import javax.servlet.http.HttpServletResponse;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -31,39 +31,31 @@ public class UserRepository {
         try {
             return DataSource.getInstance(config).getConnection();
         } catch (SQLException e) {
-            throw new UnableToGetConnectionException(e.getMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            throw new UnableToGetConnectionException(e.getMessage());
         }
     }
 
-    public User getUserByNameOrEmail(String name, String email) {
-        User user = null;
+    public boolean getUserByNameOrEmail(String name, String email) {
 
-        Connection connection = getConnection();
         try {
-
+            Connection connection = getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement(SAVE_USER_BY_NAME_OR_EMAIL);
             preparedStatement.setString(1, name);
             preparedStatement.setString(2, email);
 
             ResultSet rs = preparedStatement.executeQuery();
 
-            while (rs.next()) {
-                user = User.builder()
-                        .name(rs.getString(NAME))
-                        .email(rs.getString(EMAIL))
-                        .build();
-            }
+            return rs.next();
         } catch (SQLException e) {
-            throw new UnableToExecuteQueryException(e.getMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            throw new UnableToExecuteQueryException(e.getMessage());
         }
-        return user;
     }
 
 
-    public void saveUser(String name, String password, String email, String uuid,String role) {
+    public void saveUser(String name, String password, String email, String uuid, String role) {
 
-        Connection connection = getConnection();
         try {
+            Connection connection = getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement(SAVE_USER);
             preparedStatement.setString(1, name);
             preparedStatement.setString(2, password);
@@ -73,17 +65,17 @@ public class UserRepository {
 
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
-            throw new UnableToExecuteQueryException(e.getMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            throw new UnableToExecuteQueryException(e.getMessage());
         }
     }
 
 
     public User getUserByNameAndPassword(String name, String password) {
-        User user = null;
+
         try {
+            User user = null;
 
             Connection connection = getConnection();
-
             PreparedStatement preparedStatement = connection.prepareStatement(SELECT_USER_BY_NAME_AND_PASSWORD);
             preparedStatement.setString(1, name);
             preparedStatement.setString(2, password);
@@ -98,10 +90,13 @@ public class UserRepository {
                         .UUID(rs.getString(UUID))
                         .build();
             }
+            if (user == null) {
+                throw new UserNotFoundException("Incorrect username or password");
+            }
+            return user;
 
         } catch (SQLException e) {
-            throw new UnableToExecuteQueryException(e.getMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            throw new UnableToExecuteQueryException(e.getMessage());
         }
-        return user;
     }
 }

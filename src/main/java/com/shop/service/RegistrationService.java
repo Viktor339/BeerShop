@@ -1,19 +1,20 @@
 package com.shop.service;
 
-import com.shop.model.User;
 import com.shop.repository.UserRepository;
 import com.shop.service.exception.UserAlreadyExistsException;
 import com.shop.service.exception.ValidatorException;
 import com.shop.service.validator.EmailValidator;
 import com.shop.service.validator.NameValidator;
+import com.shop.service.validator.NotNullFieldValidator;
 import com.shop.service.validator.Validator;
 import com.shop.servlet.request.RegistrationRequest;
 import org.apache.commons.codec.digest.DigestUtils;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public class RegistrationService {
     private final UserRepository userRepository;
@@ -22,6 +23,14 @@ public class RegistrationService {
     public RegistrationService(UserRepository userRepository) {
         this.userRepository = userRepository;
         validators = Arrays.asList(
+                new NotNullFieldValidator<>(
+                        req -> Stream.of(req.getName(), req.getPassword(), req.getEmail())
+                                .noneMatch(Objects::isNull),
+                        req -> "Error. Request must contain the field: " + Stream.of(req)
+                                .map(field -> field.getName() == null ? "name" : field.getEmail() == null ? "email" : "password")
+                                .findFirst()
+                                .get()
+                ),
                 new EmailValidator(),
                 new NameValidator()
         );
@@ -36,19 +45,17 @@ public class RegistrationService {
         final Optional<Object> invalidMessage = validators.stream()
                 .filter(v -> v.isValid(registrationRequest))
                 .findFirst()
-                .map(Validator::getMessage);
+                .map(v -> v.getMessage(registrationRequest));
 
         if (invalidMessage.isPresent()) {
-            throw new ValidatorException(invalidMessage.get().toString(), HttpServletResponse.SC_BAD_REQUEST);
+            throw new ValidatorException(invalidMessage.get().toString());
         }
 
-        User user = userRepository.getUserByNameOrEmail(name, email);
-
-        if (user != null) {
-            throw new UserAlreadyExistsException("Username or email already exists", HttpServletResponse.SC_BAD_REQUEST);
+        if (userRepository.getUserByNameOrEmail(name, email)) {
+            throw new UserAlreadyExistsException("Username or email already exists");
         }
         String UUID = DigestUtils.md5Hex(name);
-        userRepository.saveUser(name, password, email, UUID,"user");
+        userRepository.saveUser(name, password, email, UUID, "user");
 
         return UUID;
     }

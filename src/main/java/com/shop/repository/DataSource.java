@@ -2,6 +2,7 @@ package com.shop.repository;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.shop.config.Config;
+import com.shop.service.exception.UnacceptableDatabaseDriverException;
 
 import java.beans.PropertyVetoException;
 import java.sql.Connection;
@@ -24,7 +25,7 @@ public class DataSource {
             connectionPool.setAcquireIncrement(5);
             connectionPool.setMaxPoolSize(20);
         } catch (PropertyVetoException e) {
-            e.printStackTrace();
+            throw new UnacceptableDatabaseDriverException(e.getMessage());
         }
     }
 

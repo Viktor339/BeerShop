@@ -1,5 +1,7 @@
 package com.shop.config;
 
+import com.shop.service.exception.ConfigException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -18,7 +20,7 @@ public class Config {
         try {
             config.load(input);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new ConfigException(e.getMessage());
         }
     }
 
