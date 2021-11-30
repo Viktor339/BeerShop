@@ -5,6 +5,7 @@ import com.shop.service.JSONParseService;
 import com.shop.service.LoginService;
 import com.shop.service.Response;
 import com.shop.service.exception.UserNotFoundException;
+import com.shop.service.exception.ValidatorException;
 import com.shop.servlet.dto.InformationResponse;
 import com.shop.servlet.request.LoginRequest;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +44,8 @@ public class LoginAction implements Action {
                 response.send(resp, new InformationResponse("You have successfully logged in like admin"), HttpServletResponse.SC_OK);
             }
 
-        } catch (UserNotFoundException e) {
+        } catch (UserNotFoundException |
+                ValidatorException e) {
             response.send(resp, new InformationResponse(e.getMessage()), HttpServletResponse.SC_BAD_REQUEST);
         }
     }

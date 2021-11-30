@@ -19,7 +19,7 @@ public class EmailValidator implements Validator<RegistrationRequest> {
     }
 
     @Override
-    public String getMessage(RegistrationRequest value) {
-        return "Incorrect email: " + value.getEmail();
+    public String getMessage() {
+        return "Incorrect email" ;
     }
 }

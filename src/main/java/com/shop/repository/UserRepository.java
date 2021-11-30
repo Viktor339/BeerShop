@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 
 public class UserRepository {
 
@@ -70,7 +71,7 @@ public class UserRepository {
     }
 
 
-    public User getUserByNameAndPassword(String name, String password) {
+    public Optional<User> getUserByNameAndPassword(String name, String password) {
 
         try {
             User user = null;
@@ -90,10 +91,7 @@ public class UserRepository {
                         .UUID(rs.getString(UUID))
                         .build();
             }
-            if (user == null) {
-                throw new UserNotFoundException("Incorrect username or password");
-            }
-            return user;
+            return Optional.ofNullable(user);
 
         } catch (SQLException e) {
             throw new UnableToExecuteQueryException(e.getMessage());

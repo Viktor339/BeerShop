@@ -12,9 +12,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 public class RegistrationService {
     private final UserRepository userRepository;
@@ -23,14 +21,9 @@ public class RegistrationService {
     public RegistrationService(UserRepository userRepository) {
         this.userRepository = userRepository;
         validators = Arrays.asList(
-                new NotNullFieldValidator<>(
-                        req -> Stream.of(req.getName(), req.getPassword(), req.getEmail())
-                                .noneMatch(Objects::isNull),
-                        req -> "Error. Request must contain the field: " + Stream.of(req)
-                                .map(field -> field.getName() == null ? "name" : field.getEmail() == null ? "email" : "password")
-                                .findFirst()
-                                .get()
-                ),
+                new NotNullFieldValidator<>(RegistrationRequest::getPassword, "Password is null"),
+                new NotNullFieldValidator<>(RegistrationRequest::getEmail, "Email is null"),
+                new NotNullFieldValidator<>(RegistrationRequest::getName, "Name is null"),
                 new EmailValidator(),
                 new NameValidator()
         );
@@ -42,13 +35,13 @@ public class RegistrationService {
         String password = registrationRequest.getPassword();
         String email = registrationRequest.getEmail();
 
-        final Optional<Object> invalidMessage = validators.stream()
+        final Optional<String> invalidMessage = validators.stream()
                 .filter(v -> v.isValid(registrationRequest))
                 .findFirst()
-                .map(v -> v.getMessage(registrationRequest));
+                .map(Validator::getMessage);
 
         if (invalidMessage.isPresent()) {
-            throw new ValidatorException(invalidMessage.get().toString());
+            throw new ValidatorException(invalidMessage.get());
         }
 
         if (userRepository.getUserByNameOrEmail(name, email)) {
