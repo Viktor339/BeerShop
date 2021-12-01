@@ -2,17 +2,16 @@ package com.shop.service.validator;
 
 import lombok.RequiredArgsConstructor;
 
-import java.util.function.Function;
+import java.util.function.Predicate;
 
 @RequiredArgsConstructor
-public class NotNullFieldValidator<T> implements Validator<T> {
-
-    private final Function<T, ?> getter;
+public class ContainerVolumeValidator<T> implements Validator<T> {
+    private final Predicate<T> predicate;
     private final String message;
 
     @Override
     public boolean isValid(T value) {
-        return getter.apply(value) == null;
+        return !predicate.test(value);
     }
 
     @Override
