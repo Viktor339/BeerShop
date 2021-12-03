@@ -48,27 +48,27 @@ public class Config {
         return config.getProperty(USERNAME);
     }
 
-    public String getMinAlcoholPercentage() {
-        return config.getProperty(MIN_PERCENTAGE);
+    public Double getMinAlcoholPercentage() {
+        return Double.parseDouble(config.getProperty(MIN_PERCENTAGE));
     }
 
-    public String getMaxAlcoholPercentage() {
-        return config.getProperty(MAX_PERCENTAGE);
+    public Double getMaxAlcoholPercentage() {
+        return Double.parseDouble(config.getProperty(MAX_PERCENTAGE));
     }
 
-    public String getMinContainerVolume() {
-        return config.getProperty(MIN_CONTAINER_VOLUME);
+    public Double getMinContainerVolume() {
+        return Double.parseDouble(config.getProperty(MIN_CONTAINER_VOLUME));
     }
 
-    public String getMaxContainerVolume() {
-        return config.getProperty(MAX_CONTAINER_VOLUME);
+    public Double getMaxContainerVolume() {
+        return Double.parseDouble(config.getProperty(MAX_CONTAINER_VOLUME));
     }
 
-    public String getMinBitterness() {
-        return config.getProperty(MIN_BITTERNESS);
+    public Integer getMinBitterness() {
+        return Integer.parseInt(config.getProperty(MIN_BITTERNESS));
     }
 
-    public String getMAxBitterness() {
-        return config.getProperty(MAX_BITTERNESS);
+    public Integer getMAxBitterness() {
+        return Integer.parseInt(config.getProperty(MAX_BITTERNESS));
     }
 }

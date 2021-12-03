@@ -1,28 +1,33 @@
 package com.shop.repository;
 
 import com.shop.config.Config;
+import com.shop.model.BeerInfo;
+import com.shop.model.BottleBeerData;
 import com.shop.model.Position;
 import com.shop.service.exception.UnableToExecuteQueryException;
 import com.shop.service.exception.UnableToGetConnectionException;
+import com.shop.servlet.dto.AddPositionResponse;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 public class PositionRepository {
-    private static final String SAVE_BOTTLE_BEER_POSITION =
-            "insert into positions (name,beerType,alcoholPercentage,bitterness,containerType,containerVolume,quantity,created,modified) values (?,?,?,?,?,?,?,?,?)";
-    private static final String SAVE_DRAFT_BEER_POSITION =
-            "insert into positions (name,beerType,alcoholPercentage,bitterness,containerType,availableLiters,created,modified) values (?,?,?,?,?,?,?,?)";
-    private static final String GET_POSITION_BY_NAME_AND_CONTAINER_TYPE = "select * from positions where name =? and containerType= ?";
-    private static final String UPDATE_POSITION = "update positions set containerVolume=?,quantity=? where name=? and containerType=?";
-    private final Config config;
 
-    public PositionRepository() {
-        config = new Config();
+    private static final String SAVE_POSITION =
+            "insert into positions (name,beerType,alcoholPercentage,bitterness,containerType,created,modified,beerInfo) values (?,?,?,?,?,?,?,to_json(?::json))";
+    private static final String GET_POSITION_BY_NAME_AND_CONTAINER_TYPE = "select * from positions where name =? and containerType= ?";
+    private static final String UPDATE_POSITION = "update positions set beerInfo=to_json(?::json),modified=? where name=? and containerType=?";
+    private final Config config;
+    private final ObjectMapper objectMapper;
+
+    public PositionRepository(ObjectMapper objectMapper, Config config) {
+        this.config = config;
+        this.objectMapper = objectMapper;
     }
 
     protected Connection getConnection() {
@@ -49,94 +54,53 @@ public class PositionRepository {
         }
     }
 
-    public Position savePosition(String name, String beerType, int alcoholPercentage, String bitterness, String containerType, String containerVolume, String quantity, Timestamp created, Timestamp modified) {
+
+    public AddPositionResponse save(AddPositionResponse addPositionResponse) {
 
         try {
-            Connection connection = getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(SAVE_BOTTLE_BEER_POSITION);
-            preparedStatement.setString(1, name);
-            preparedStatement.setString(2, beerType);
-            preparedStatement.setInt(3, alcoholPercentage);
-            preparedStatement.setString(4, bitterness);
-            preparedStatement.setString(5, containerType);
-            preparedStatement.setString(6, containerVolume);
-            preparedStatement.setString(7, quantity);
-            preparedStatement.setTimestamp(8, created);
-            preparedStatement.setTimestamp(9, modified);
+            String json = objectMapper.writeValueAsString(addPositionResponse.getBeerInfo());
 
-            Position position = Position.builder()
-                    .name(name)
-                    .beerType(beerType)
-                    .alcoholPercentage(alcoholPercentage)
-                    .bitterness(bitterness)
-                    .containerType(containerType)
-                    .containerVolume(containerVolume)
-                    .quantity(quantity)
-                    .build();
+            Connection connection = getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(SAVE_POSITION, Statement.RETURN_GENERATED_KEYS);
+            preparedStatement.setString(1, addPositionResponse.getName());
+            preparedStatement.setString(2, addPositionResponse.getBeerType());
+            preparedStatement.setDouble(3, addPositionResponse.getAlcoholPercentage());
+            preparedStatement.setInt(4, addPositionResponse.getBitterness());
+            preparedStatement.setString(5, addPositionResponse.getContainerType());
+            preparedStatement.setObject(6, LocalDateTime.now());
+            preparedStatement.setObject(7, LocalDateTime.now());
+            preparedStatement.setString(8, json);
 
             preparedStatement.executeUpdate();
             ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
             if (generatedKeys.next()) {
-                position.setId(generatedKeys.getLong(1));
+                addPositionResponse.setId(generatedKeys.getLong(1));
             }
 
-            return position;
-        } catch (SQLException e) {
-            throw new UnableToExecuteQueryException(e.getMessage());
-        }
-    }
-
-    public Position savePosition(String name, String beerType, int alcoholPercentage, String bitterness, String containerType, String availableLiters, Timestamp created, Timestamp modified) {
-
-        try {
-            Connection connection = getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(SAVE_DRAFT_BEER_POSITION, Statement.RETURN_GENERATED_KEYS);
-            preparedStatement.setString(1, name);
-            preparedStatement.setString(2, beerType);
-            preparedStatement.setInt(3, alcoholPercentage);
-            preparedStatement.setString(4, bitterness);
-            preparedStatement.setString(5, containerType);
-            preparedStatement.setString(6, availableLiters);
-            preparedStatement.setTimestamp(7, created);
-            preparedStatement.setTimestamp(8, modified);
-
-            Position position = Position.builder()
-                    .name(name)
-                    .beerType(beerType)
-                    .alcoholPercentage(alcoholPercentage)
-                    .bitterness(bitterness)
-                    .containerType(containerType)
-                    .availableLitres(availableLiters)
-                    .build();
-
-            preparedStatement.executeUpdate();
-            ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
-            if (generatedKeys.next()) {
-                position.setId(generatedKeys.getLong(1));
-            }
-
-            return position;
-        } catch (SQLException e) {
+            return addPositionResponse;
+        } catch (Exception e) {
             throw new UnableToExecuteQueryException(e.getMessage());
         }
     }
 
 
-    public Position update(String containerVolume, String quantity, String name, String containerType) {
+    public Position update(Double containerVolume, Integer quantity, String name, String containerType) {
 
         try {
+            BeerInfo beerInfo = new BottleBeerData(containerVolume, quantity);
+            String json = objectMapper.writeValueAsString(beerInfo);
+
             Connection connection = getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_POSITION, Statement.RETURN_GENERATED_KEYS);
-            preparedStatement.setString(1, containerVolume);
-            preparedStatement.setString(2, quantity);
+            preparedStatement.setString(1, json);
+            preparedStatement.setObject(2, LocalDateTime.now());
             preparedStatement.setString(3, name);
             preparedStatement.setString(4, containerType);
 
             Position position = Position.builder()
                     .name(name)
                     .containerType(containerType)
-                    .containerVolume(containerVolume)
-                    .quantity(quantity)
+                    .beerInfo(beerInfo)
                     .build();
 
             preparedStatement.executeUpdate();
@@ -146,10 +110,8 @@ public class PositionRepository {
             }
 
             return position;
-        } catch (SQLException e) {
+        } catch (Exception e) {
             throw new UnableToExecuteQueryException(e.getMessage());
         }
-
-
     }
 }

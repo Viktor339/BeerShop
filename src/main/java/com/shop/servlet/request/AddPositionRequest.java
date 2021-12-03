@@ -12,8 +12,8 @@ public class AddPositionRequest {
 
     private String name;
     private String beerType;
-    private int alcoholPercentage;
-    private String bitterness;
+    private Double alcoholPercentage;
+    private Integer bitterness;
     private String containerType;
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "containerType", include = JsonTypeInfo.As.EXTERNAL_PROPERTY)

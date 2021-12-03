@@ -1,5 +1,6 @@
 package com.shop.servlet.action;
 
+import com.shop.config.Config;
 import com.shop.repository.PositionRepository;
 import com.shop.repository.UserRepository;
 import com.shop.service.AddPositionService;
@@ -8,6 +9,7 @@ import com.shop.service.JSONParseService;
 import com.shop.service.LoginService;
 import com.shop.service.RegistrationService;
 import com.shop.service.Response;
+import com.shop.service.ValidatorService;
 import com.shop.service.exception.ActionNotFoundException;
 import com.shop.service.exception.ConfigException;
 import com.shop.service.exception.UnableToExecuteQueryException;
@@ -36,16 +38,19 @@ public class DoAllServlet extends HttpServlet {
         ObjectMapper objectMapper = new ObjectMapper();
         UserRepository userRepository = new UserRepository();
         JSONParseService jsonParseService = new JSONParseService(objectMapper);
-        PositionRepository positionRepository = new PositionRepository();
+        Config config = new Config();
+        PositionRepository positionRepository = new PositionRepository(objectMapper, config);
+        ValidatorService validatorService = new ValidatorService();
+
         response = new Response(objectMapper);
         postActions = Arrays.asList(
                 new RegistrationAction(new RegistrationService(userRepository), jsonParseService, response),
-                new LoginAction(new LoginService(userRepository),jsonParseService, response),
-                new AddPositionAction(new AddPositionService(positionRepository),jsonParseService,response)
+                new LoginAction(new LoginService(userRepository), jsonParseService, response),
+                new AddPositionAction(new AddPositionService(positionRepository, config, validatorService), jsonParseService, response)
         );
 
         putActions = Collections.singletonList(
-                new ChangePositionAction(new ChangePositionService(positionRepository), jsonParseService, response)
+                new ChangePositionAction(new ChangePositionService(positionRepository, config, validatorService), jsonParseService, response)
         );
     }
 

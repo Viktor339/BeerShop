@@ -12,7 +12,7 @@ public class NotNullFieldValidator<T> implements Validator<T> {
 
     @Override
     public boolean isValid(T value) {
-        return getter.apply(value) == null;
+        return getter.apply(value) == null || !(getter.apply(value).toString().length()>0);
     }
 
     @Override

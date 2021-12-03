@@ -1,18 +1,13 @@
 package com.shop.model;
 
-import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
+@AllArgsConstructor
 @NoArgsConstructor
-public class BottleBeerData extends BeerInfo {
-    private String containerVolume;
-    private String quantity;
-
-    public BottleBeerData(String containerVolume,String quantity){
-        this.containerVolume=containerVolume;
-        this.quantity=quantity;
-    }
+@Data
+public class BottleBeerData implements BeerInfo {
+    private Double containerVolume;
+    private Integer quantity;
 }

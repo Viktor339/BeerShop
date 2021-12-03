@@ -3,6 +3,7 @@ package com.shop.servlet.action;
 import com.shop.service.AddPositionService;
 import com.shop.service.JSONParseService;
 import com.shop.service.Response;
+import com.shop.service.exception.BeerPositionExecutorNotFoundException;
 import com.shop.service.exception.PositionAlreadyExistsException;
 import com.shop.service.exception.ValidatorException;
 import com.shop.servlet.dto.AddPositionResponse;
@@ -36,7 +37,8 @@ public class AddPositionAction implements Action {
 
             response.send(resp, addPositionResponse, HttpServletResponse.SC_OK);
         } catch (PositionAlreadyExistsException |
-                ValidatorException e) {
+                ValidatorException |
+                BeerPositionExecutorNotFoundException e) {
             response.send(resp, new InformationResponse(e.getMessage()), HttpServletResponse.SC_BAD_REQUEST);
         }
     }

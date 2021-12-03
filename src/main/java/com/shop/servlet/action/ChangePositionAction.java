@@ -38,8 +38,7 @@ public class ChangePositionAction implements Action {
             response.send(resp, new ChangePositionResponse(position.getId(),
                     position.getName(),
                     position.getContainerType(),
-                    position.getContainerVolume(),
-                    position.getQuantity()), HttpServletResponse.SC_OK);
+                    position.getBeerInfo()), HttpServletResponse.SC_OK);
 
         } catch (PositionNotFoundException |
                 ValidatorException e) {

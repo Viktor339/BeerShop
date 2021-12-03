@@ -8,11 +8,9 @@ import lombok.Data;
 public class Position {
     private long id;
     private String name;
-    private String containerType;
-    private String containerVolume;
-    private String quantity;
     private String beerType;
-    private int alcoholPercentage;
-    private String bitterness;
-    private String availableLitres;
+    private Double alcoholPercentage;
+    private Integer bitterness;
+    private String containerType;
+    private BeerInfo beerInfo;
 }

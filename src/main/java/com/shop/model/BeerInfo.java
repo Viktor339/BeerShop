@@ -1,4 +1,4 @@
 package com.shop.model;
 
-public class BeerInfo {
+public interface BeerInfo {
 }
