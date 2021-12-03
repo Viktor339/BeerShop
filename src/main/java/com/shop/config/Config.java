@@ -13,6 +13,14 @@ public class Config {
     private static final String URL = "jdbc.URL";
     private static final String USERNAME = "jdbc.Username";
     private static final String PROPERTIES_FILE_NAME = "application.properties";
+    private static final String MIN_PERCENTAGE = "validator.percentage.min";
+    private static final String MAX_PERCENTAGE = "validator.percentage.max";
+    private static final String MIN_CONTAINER_VOLUME = "validator.container.min";
+    private static final String MAX_CONTAINER_VOLUME = "validator.container.max";
+    private static final String MIN_BITTERNESS = "validator.bitterness.min";
+    private static final String MAX_BITTERNESS = "validator.bitterness.max";
+
+
     private final Properties config = new Properties();
 
     public Config() {
@@ -38,5 +46,29 @@ public class Config {
 
     public String getUsername() {
         return config.getProperty(USERNAME);
+    }
+
+    public Double getMinAlcoholPercentage() {
+        return Double.parseDouble(config.getProperty(MIN_PERCENTAGE));
+    }
+
+    public Double getMaxAlcoholPercentage() {
+        return Double.parseDouble(config.getProperty(MAX_PERCENTAGE));
+    }
+
+    public Double getMinContainerVolume() {
+        return Double.parseDouble(config.getProperty(MIN_CONTAINER_VOLUME));
+    }
+
+    public Double getMaxContainerVolume() {
+        return Double.parseDouble(config.getProperty(MAX_CONTAINER_VOLUME));
+    }
+
+    public Integer getMinBitterness() {
+        return Integer.parseInt(config.getProperty(MIN_BITTERNESS));
+    }
+
+    public Integer getMAxBitterness() {
+        return Integer.parseInt(config.getProperty(MAX_BITTERNESS));
     }
 }

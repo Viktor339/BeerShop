@@ -5,14 +5,13 @@ import lombok.RequiredArgsConstructor;
 import java.util.function.Function;
 
 @RequiredArgsConstructor
-public class NotNullFieldValidator<T> implements Validator<T> {
-
-    private final Function<T, ?> getter;
+public class ContainerTypeValidator<T> implements Validator<T> {
+    private final Function<T, ?> function;
     private final String message;
 
     @Override
     public boolean isValid(T value) {
-        return getter.apply(value) == null || !(getter.apply(value).toString().length()>0);
+        return !(function.apply(value).equals("draft") | function.apply(value).equals("bottle"));
     }
 
     @Override
