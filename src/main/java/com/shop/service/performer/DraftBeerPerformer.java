@@ -1,4 +1,4 @@
-package com.shop.service.executor;
+package com.shop.service.performer;
 
 import com.shop.model.DraftBeerData;
 import com.shop.service.ValidatorService;
@@ -10,17 +10,17 @@ import lombok.RequiredArgsConstructor;
 import java.util.List;
 
 @RequiredArgsConstructor
-public class DraftBeerExecutor implements Executor<AddPositionRequest, AddPositionResponse> {
+public class DraftBeerPerformer implements Performer<AddPositionRequest, AddPositionResponse> {
     private final ValidatorService validatorService;
     private final List<Validator<DraftBeerData>> draftBeerValidator;
 
     @Override
-    public boolean isValid(String value) {
+    public boolean isValid(Object value) {
         return value.equals("draft");
     }
 
     @Override
-    public AddPositionResponse execute(AddPositionRequest addPositionRequest) {
+    public AddPositionResponse perform(AddPositionRequest addPositionRequest) {
 
         DraftBeerData draftBeerData = (DraftBeerData) addPositionRequest.getBeerInfo();
         validatorService.validate(draftBeerValidator, draftBeerData);

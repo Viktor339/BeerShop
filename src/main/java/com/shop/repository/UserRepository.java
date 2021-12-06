@@ -4,7 +4,6 @@ import com.shop.config.Config;
 import com.shop.model.User;
 import com.shop.service.exception.UnableToExecuteQueryException;
 import com.shop.service.exception.UnableToGetConnectionException;
-import com.shop.service.exception.UserNotFoundException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -36,7 +35,7 @@ public class UserRepository {
         }
     }
 
-    public boolean getUserByNameOrEmail(String name, String email) {
+    public boolean existsUserByNameOrEmail(String name, String email) {
 
         try {
             Connection connection = getConnection();

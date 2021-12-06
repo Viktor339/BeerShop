@@ -36,20 +36,20 @@ public class AuthFilter implements Filter {
         String path = req.getRequestURI().substring(req.getContextPath().length());
 
         if (path.startsWith("/login") | path.startsWith("/registration")) {
-            res.sendRedirect("/doAllServlet");
+            filterChain.doFilter(request, response);
         } else {
             if (session == null) {
                 responseMessage.send(res, new InformationResponse("Please sign in"), HttpServletResponse.SC_BAD_REQUEST);
             } else {
 
                 if (session.getAttribute("role").equals("user")) {
-                    if (path.startsWith("/basket") | path.startsWith("/history")) {
+                    if (path.startsWith("/history/user") | path.startsWith("/item")) {
                         filterChain.doFilter(request, response);
                     }
                 }
 
                 if (session.getAttribute("role").equals("admin")) {
-                    if (path.startsWith("/position") | path.startsWith("/users-history")) {
+                    if (path.startsWith("/position")) {
                         filterChain.doFilter(request, response);
                     }
                 }

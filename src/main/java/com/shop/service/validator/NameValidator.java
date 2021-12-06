@@ -19,7 +19,7 @@ public class NameValidator implements Validator<RegistrationRequest> {
 
 
     @Override
-    public String getMessage() {
+    public String getResult() {
         return "Incorrect name. Name must contain only Latin characters";
     }
 }

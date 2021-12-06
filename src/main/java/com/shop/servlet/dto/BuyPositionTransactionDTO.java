@@ -1,6 +1,5 @@
 package com.shop.servlet.dto;
 
-import com.shop.model.BeerInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,9 +9,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
-public class ChangePositionResponse {
-    private long id;
+public class BuyPositionTransactionDTO {
+    private Object uuid;
     private String name;
-    private String containerType;
-    private BeerInfo beerInfo;
+    private Integer quantity;
 }

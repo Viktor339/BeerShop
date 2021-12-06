@@ -19,6 +19,10 @@ public class Config {
     private static final String MAX_CONTAINER_VOLUME = "validator.container.max";
     private static final String MIN_BITTERNESS = "validator.bitterness.min";
     private static final String MAX_BITTERNESS = "validator.bitterness.max";
+    private static final String MIN_USER_PAGE_SIZE = "validator.user.pageSize.min";
+    private static final String MAX_USER_PAGE_SIZE = "validator.user.pageSize.max";
+
+
 
 
     private final Properties config = new Properties();
@@ -70,5 +74,13 @@ public class Config {
 
     public Integer getMAxBitterness() {
         return Integer.parseInt(config.getProperty(MAX_BITTERNESS));
+    }
+
+    public Integer getMinUserPageSize() {
+        return Integer.parseInt(config.getProperty(MIN_USER_PAGE_SIZE));
+    }
+
+    public Integer getMaxUserPageSize() {
+        return Integer.parseInt(config.getProperty(MAX_USER_PAGE_SIZE));
     }
 }

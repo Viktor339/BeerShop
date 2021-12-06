@@ -17,7 +17,7 @@ public class ContainerVolumeValidator<T> implements Validator<T> {
     }
 
     @Override
-    public String getMessage() {
+    public String getResult() {
         return message;
     }
 }

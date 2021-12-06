@@ -36,6 +36,7 @@ public class LoginAction implements Action {
 
             if (user.getRole().equals("user")) {
                 req.getSession().setAttribute("role", "user");
+                req.getSession().setAttribute("UUID", user.getUUID());
                 response.send(resp, new InformationResponse("You have successfully logged in like user"), HttpServletResponse.SC_OK);
             }
 

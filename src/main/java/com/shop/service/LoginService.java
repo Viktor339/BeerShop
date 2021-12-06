@@ -4,7 +4,7 @@ import com.shop.model.User;
 import com.shop.repository.UserRepository;
 import com.shop.service.exception.UserNotFoundException;
 import com.shop.service.exception.ValidatorException;
-import com.shop.service.validator.NotNullFieldValidator;
+import com.shop.service.validator.NotEmptyFieldValidator;
 import com.shop.service.validator.Validator;
 import com.shop.servlet.request.LoginRequest;
 
@@ -19,20 +19,20 @@ public class LoginService {
     public LoginService(UserRepository userRepository) {
         this.userRepository = userRepository;
         validators = Arrays.asList(
-                new NotNullFieldValidator<>(LoginRequest::getName, "Name is null"),
-                new NotNullFieldValidator<>(LoginRequest::getPassword, "Password is null")
+                new NotEmptyFieldValidator<>(LoginRequest::getName, "Name is null"),
+                new NotEmptyFieldValidator<>(LoginRequest::getPassword, "Password is null")
         );
     }
 
     public User login(LoginRequest loginRequest) {
 
-        final Optional<String> invalidMessage = validators.stream()
+        final Optional<Object> invalidMessage = validators.stream()
                 .filter(v -> v.isValid(loginRequest))
                 .findFirst()
-                .map(Validator::getMessage);
+                .map(Validator::getResult);
 
         if (invalidMessage.isPresent()) {
-            throw new ValidatorException(invalidMessage.get());
+            throw new ValidatorException(invalidMessage.get().toString());
         }
 
         return userRepository.getUserByNameAndPassword(loginRequest.getName(), loginRequest.getPassword())
