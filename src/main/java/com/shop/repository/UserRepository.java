@@ -14,6 +14,7 @@ import java.util.Optional;
 public class UserRepository {
 
     private static final String SELECT_USER_BY_NAME_AND_PASSWORD = "select * from users where name=? and password=?";
+    private static final String SELECT_USERID_BY_UUID = "select * from users where uuid=? ";
     private static final String SAVE_USER = "insert into users (name,password,email,uuid,role) values (?,?,?,?,?)";
     private static final String SAVE_USER_BY_NAME_OR_EMAIL = "select * from users where name =? or email= ?";
     private static final String NAME = "name";
@@ -21,6 +22,7 @@ public class UserRepository {
     private static final String PASSWORD = "password";
     private static final String ROLE = "role";
     private static final String UUID = "uuid";
+    private static final String ID = "id";
     private final Config config;
 
     public UserRepository() {
@@ -91,6 +93,25 @@ public class UserRepository {
                         .build();
             }
             return Optional.ofNullable(user);
+
+        } catch (SQLException e) {
+            throw new UnableToExecuteQueryException(e.getMessage());
+        }
+    }
+
+    public Integer getUserIdByUUID(Object uuid) {
+
+        try {
+            Integer id = null;
+            Connection connection = getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(SELECT_USERID_BY_UUID);
+            preparedStatement.setObject(1, uuid);
+
+            ResultSet rs = preparedStatement.executeQuery();
+            while (rs.next()) {
+                id = rs.getInt(ID);
+            }
+            return id;
 
         } catch (SQLException e) {
             throw new UnableToExecuteQueryException(e.getMessage());

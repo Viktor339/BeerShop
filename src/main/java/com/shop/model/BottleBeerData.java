@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 @Data
 public class BottleBeerData implements BeerInfo {
     private Double containerVolume;
-    private Integer quantity;
+    private Double quantity;
 }

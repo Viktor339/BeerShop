@@ -8,5 +8,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class DraftBeerData implements BeerInfo {
-    private Integer availableLiters;
+    private Double availableLiters;
 }

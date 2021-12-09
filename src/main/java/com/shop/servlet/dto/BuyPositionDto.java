@@ -9,8 +9,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
-public class BuyPositionTransactionDTO {
-    private Object uuid;
+public class BuyPositionDto {
+    private Integer userId;
     private String name;
-    private Integer quantity;
+    private Double quantity;
 }

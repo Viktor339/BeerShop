@@ -33,9 +33,11 @@ public class BuyPositionAction implements Action {
 
         try {
             Object uuid = req.getSession().getAttribute("UUID");
-            String message = buyPositionService.buy(buyPositionRequest,uuid);
+            buyPositionService.buy(buyPositionRequest,uuid);
 
-            response.send(resp, new InformationResponse(message), HttpServletResponse.SC_OK);
+            resp.resetBuffer();
+            resp.setStatus(HttpServletResponse.SC_OK);
+            resp.flushBuffer();
 
         } catch (PositionNotFoundException |
                 ValidatorException |

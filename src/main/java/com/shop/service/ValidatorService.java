@@ -10,13 +10,13 @@ public class ValidatorService {
 
     public <T> void validate(List<Validator<T>> validator, T data) {
 
-        final Optional<Object> invalidDraftBeerValidatorMessage = validator.stream()
+        final Optional<String> invalidDraftBeerValidatorMessage = validator.stream()
                 .filter(v -> v.isValid(data))
                 .findFirst()
-                .map(Validator::getResult);
+                .map(Validator::getMessage);
 
         if (invalidDraftBeerValidatorMessage.isPresent()) {
-            throw new ValidatorException(invalidDraftBeerValidatorMessage.get().toString());
+            throw new ValidatorException(invalidDraftBeerValidatorMessage.get());
         }
     }
 }

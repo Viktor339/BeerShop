@@ -3,6 +3,7 @@ package com.shop.service.performer;
 import com.shop.model.DraftBeerData;
 import com.shop.service.ValidatorService;
 import com.shop.service.validator.Validator;
+import com.shop.servlet.dto.AddPositionDto;
 import com.shop.servlet.dto.AddPositionResponse;
 import com.shop.servlet.request.AddPositionRequest;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.List;
 
 @RequiredArgsConstructor
-public class DraftBeerPerformer implements Performer<AddPositionRequest, AddPositionResponse> {
+public class DraftBeerPerformer implements Performer<AddPositionRequest, AddPositionDto> {
     private final ValidatorService validatorService;
     private final List<Validator<DraftBeerData>> draftBeerValidator;
 
@@ -20,12 +21,14 @@ public class DraftBeerPerformer implements Performer<AddPositionRequest, AddPosi
     }
 
     @Override
-    public AddPositionResponse perform(AddPositionRequest addPositionRequest) {
+    public AddPositionDto perform(AddPositionRequest addPositionRequest) {
 
         DraftBeerData draftBeerData = (DraftBeerData) addPositionRequest.getBeerInfo();
         validatorService.validate(draftBeerValidator, draftBeerData);
 
-        return AddPositionResponse.builder()
+
+
+        return AddPositionDto.builder()
                 .name(addPositionRequest.getName())
                 .beerType(addPositionRequest.getBeerType())
                 .alcoholPercentage(addPositionRequest.getAlcoholPercentage())

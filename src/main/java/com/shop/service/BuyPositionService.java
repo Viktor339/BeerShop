@@ -1,70 +1,75 @@
 package com.shop.service;
 
-import com.shop.model.BuyBottleBeerData;
-import com.shop.model.BuyDraftBeerData;
+import com.shop.model.BuyBeerData;
 import com.shop.model.Position;
 import com.shop.repository.PositionRepository;
-import com.shop.repository.TransactionRepository;
+import com.shop.repository.UserRepository;
+import com.shop.repository.UserTransactionRepository;
 import com.shop.service.performer.BuyBottleBeerPerformer;
 import com.shop.service.performer.BuyDraftBeerPerformer;
 import com.shop.service.performer.Performer;
 import com.shop.service.validator.NotEmptyFieldValidator;
 import com.shop.service.validator.Validator;
-import com.shop.servlet.dto.BuyPositionTransactionDTO;
+import com.shop.servlet.dto.BuyPositionDto;
 import com.shop.servlet.request.BuyPositionRequest;
 import lombok.RequiredArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 @RequiredArgsConstructor
 public class BuyPositionService {
     private final PositionRepository positionRepository;
-    private final TransactionRepository transactionRepository;
-    private final List<Performer<BuyPositionRequest, Map<BuyPositionTransactionDTO, Position>>> buyBottleBeerPerformer;
-    private final List<Validator<BuyBottleBeerData>> bottleBeerDataValidator;
-    private final List<Validator<BuyDraftBeerData>> draftBeerDataValidator;
+    private final UserTransactionRepository userTransactionRepository;
+    private final List<Performer<BuyPositionRequest, Map<Position, Double>>> buyBottleBeerPerformer;
+    private final ValidatorService validatorService;
+    private final UserRepository userRepository;
+
+    private final List<Validator<BuyBeerData>> buyBeerDataValidator;
 
 
-    public BuyPositionService(PositionRepository positionRepository, ValidatorService validatorService, TransactionRepository transactionRepository) {
-        this.transactionRepository = transactionRepository;
+    public BuyPositionService(PositionRepository positionRepository, ValidatorService validatorService, UserTransactionRepository userTransactionRepository, UserRepository userRepository) {
+        this.userTransactionRepository = userTransactionRepository;
         this.positionRepository = positionRepository;
-        bottleBeerDataValidator = Arrays.asList(
-                new NotEmptyFieldValidator<>(BuyBottleBeerData::getName, "Name is null or empty"),
-                new NotEmptyFieldValidator<>(BuyBottleBeerData::getQuantity, "Quantity is null or empty")
-        );
-        draftBeerDataValidator = Arrays.asList(
-                new NotEmptyFieldValidator<>(BuyDraftBeerData::getName, "Name is null or empty"),
-                new NotEmptyFieldValidator<>(BuyDraftBeerData::getQuantity, "Quantity is null or empty")
+        this.validatorService = validatorService;
+        this.userRepository = userRepository;
 
-        );
         buyBottleBeerPerformer = Arrays.asList(
-                new BuyBottleBeerPerformer(validatorService, positionRepository, bottleBeerDataValidator),
-                new BuyDraftBeerPerformer(validatorService, positionRepository, draftBeerDataValidator)
+                new BuyBottleBeerPerformer(positionRepository),
+                new BuyDraftBeerPerformer(positionRepository)
+        );
+
+        buyBeerDataValidator = Arrays.asList(
+                new NotEmptyFieldValidator<>(BuyBeerData::getId, "Id is null or empty"),
+                new NotEmptyFieldValidator<>(BuyBeerData::getQuantity, "Quantity is null or empty")
         );
     }
 
-    public String buy(BuyPositionRequest buyPositionRequest, Object uuid) {
+    public void buy(BuyPositionRequest buyPositionRequest, Object uuid) {
 
-        List<Map<BuyPositionTransactionDTO, Position>> positionList = new ArrayList<>();
+        Stream.of(buyPositionRequest.getDraft(), buyPositionRequest.getBottle())
+                .flatMap(Collection::stream)
+                .forEach(beer -> validatorService.validate(buyBeerDataValidator, beer));
+
+        Integer id = userRepository.getUserIdByUUID(uuid);
+
         buyBottleBeerPerformer.stream()
-                .filter(n -> n.isValid(buyPositionRequest.getBuyPositionData()))
-                .forEach(n -> positionList.add(n.perform(buyPositionRequest)));
+                .filter(n -> n.isValid(buyPositionRequest))
+                .map(n -> n.perform(buyPositionRequest))
+                .flatMap(positions -> positions.entrySet().stream())
+                .forEach(position -> {
+                    positionRepository.updatePositionAfterPurchase(position.getKey());
 
+                    BuyPositionDto buyPositionDto = BuyPositionDto.builder()
+                            .userId(id)
+                            .name(position.getKey().getName())
+                            .quantity(position.getValue())
+                            .build();
 
-        for (Map<BuyPositionTransactionDTO, Position> transactionByPosition : positionList) {
-            for (Map.Entry<BuyPositionTransactionDTO, Position> position : transactionByPosition.entrySet()) {
-                positionRepository.updatePositionAfterPurchase(position.getValue());
-
-                BuyPositionTransactionDTO buyPositionTransactionDTO = position.getKey();
-                buyPositionTransactionDTO.setUuid(uuid);
-
-                transactionRepository.save(buyPositionTransactionDTO);
-            }
-        }
-
-        return "Items purchased";
+                    userTransactionRepository.save(buyPositionDto);
+                });
     }
 }

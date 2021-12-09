@@ -26,13 +26,13 @@ public class LoginService {
 
     public User login(LoginRequest loginRequest) {
 
-        final Optional<Object> invalidMessage = validators.stream()
+        final Optional<String> invalidMessage = validators.stream()
                 .filter(v -> v.isValid(loginRequest))
                 .findFirst()
-                .map(Validator::getResult);
+                .map(Validator::getMessage);
 
         if (invalidMessage.isPresent()) {
-            throw new ValidatorException(invalidMessage.get().toString());
+            throw new ValidatorException(invalidMessage.get());
         }
 
         return userRepository.getUserByNameAndPassword(loginRequest.getName(), loginRequest.getPassword())

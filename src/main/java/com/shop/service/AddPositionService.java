@@ -15,6 +15,7 @@ import com.shop.service.validator.ContainerTypeValidator;
 import com.shop.service.validator.ContainerVolumeValidator;
 import com.shop.service.validator.NotEmptyFieldValidator;
 import com.shop.service.validator.Validator;
+import com.shop.servlet.dto.AddPositionDto;
 import com.shop.servlet.dto.AddPositionResponse;
 import com.shop.servlet.request.AddPositionRequest;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,7 @@ public class AddPositionService {
     private final List<Validator<AddPositionRequest>> positionRequestValidator;
     private final List<Validator<DraftBeerData>> draftBeerValidator;
     private final List<Validator<BottleBeerData>> bottleBeerValidator;
-    private final List<Performer<AddPositionRequest, AddPositionResponse>> beerPositionPerformer;
+    private final List<Performer<AddPositionRequest, AddPositionDto>> beerPositionPerformer;
     private final ValidatorService validatorService;
 
     public AddPositionService(PositionRepository positionRepository, Config config, ValidatorService validatorService) {
@@ -68,13 +69,21 @@ public class AddPositionService {
             throw new PositionAlreadyExistsException("Position already exists");
         }
 
-        AddPositionResponse addPositionResponse = beerPositionPerformer.stream()
+        AddPositionDto addPositionDto = positionRepository.save(beerPositionPerformer.stream()
                 .filter(n -> n.isValid(addPositionRequest.getContainerType()))
                 .findFirst()
                 .map(n -> n.perform(addPositionRequest))
-                .orElseThrow(() -> new BeerPositionExecutorNotFoundException("Executor for this beer type not found"));
+                .orElseThrow(() -> new BeerPositionExecutorNotFoundException("Executor for this beer type not found")));
 
-        return positionRepository.save(addPositionResponse);
 
+        return AddPositionResponse.builder()
+                .id(addPositionDto.getId())
+                .name(addPositionDto.getName())
+                .beerType(addPositionDto.getBeerType())
+                .alcoholPercentage(addPositionDto.getAlcoholPercentage())
+                .bitterness(addPositionDto.getBitterness())
+                .containerType(addPositionDto.getContainerType())
+                .beerInfo(addPositionDto.getBeerInfo())
+                .build();
     }
 }

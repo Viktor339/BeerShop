@@ -35,13 +35,13 @@ public class RegistrationService {
         String password = registrationRequest.getPassword();
         String email = registrationRequest.getEmail();
 
-        final Optional<Object> invalidMessage = validators.stream()
+        final Optional<String> invalidMessage = validators.stream()
                 .filter(v -> v.isValid(registrationRequest))
                 .findFirst()
-                .map(Validator::getResult);
+                .map(Validator::getMessage);
 
         if (invalidMessage.isPresent()) {
-            throw new ValidatorException(invalidMessage.get().toString());
+            throw new ValidatorException(invalidMessage.get());
         }
 
         if (userRepository.existsUserByNameOrEmail(name, email)) {

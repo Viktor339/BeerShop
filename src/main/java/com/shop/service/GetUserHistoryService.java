@@ -1,65 +1,71 @@
 package com.shop.service;
 
 import com.shop.config.Config;
-import com.shop.repository.TransactionRepository;
-import com.shop.service.validator.MaxPageSizeValidator;
-import com.shop.service.validator.MinPageSizeValidator;
+import com.shop.model.UserTransaction;
+import com.shop.repository.UserRepository;
+import com.shop.repository.UserTransactionRepository;
 import com.shop.service.validator.NotEmptyFieldValidator;
 import com.shop.service.validator.Validator;
+import com.shop.servlet.dto.GetUserHistoryDto;
 import com.shop.servlet.dto.GetUserHistoryResponse;
-import com.shop.servlet.dto.GetUserHistoryTransactionDTO;
 import com.shop.servlet.request.GetUserHistoryRequest;
 import lombok.RequiredArgsConstructor;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class GetUserHistoryService {
-    private final TransactionRepository transactionRepository;
+    private final UserTransactionRepository userTransactionRepository;
     private final ValidatorService validatorService;
     private final List<Validator<GetUserHistoryRequest>> getUserHistoryRequestValidator;
-    private final List<Validator<GetUserHistoryRequest>> pageSizeValidator;
+    private final Config config;
+    private final UserRepository userRepository;
 
 
-    public GetUserHistoryService(ValidatorService validatorService, TransactionRepository transactionRepository, Config config) {
-        this.transactionRepository = transactionRepository;
+    public GetUserHistoryService(ValidatorService validatorService, UserTransactionRepository userTransactionRepository, Config config, UserRepository userRepository) {
+        this.userTransactionRepository = userTransactionRepository;
         this.validatorService = validatorService;
+        this.config = config;
+        this.userRepository = userRepository;
 
         getUserHistoryRequestValidator = Collections.singletonList(
                 new NotEmptyFieldValidator<>(GetUserHistoryRequest::getQuantity, "Quantity is null or empty")
-        );
-
-        pageSizeValidator = Arrays.asList(
-                new MinPageSizeValidator(config.getMinUserPageSize()),
-                new MaxPageSizeValidator(config.getMaxUserPageSize())
         );
     }
 
 
     public GetUserHistoryResponse get(GetUserHistoryRequest getUserHistoryRequest, Object uuid) {
 
-        Integer userPageSize = getUserHistoryRequest.getQuantity();
-
         validatorService.validate(getUserHistoryRequestValidator, getUserHistoryRequest);
 
-        final Optional<Object> validatedPageSize = pageSizeValidator.stream()
-                .filter(v -> v.isValid(getUserHistoryRequest))
-                .findFirst()
-                .map(Validator::getResult);
+        Integer validatedPageSize = checkPageSize(getUserHistoryRequest.getQuantity());
+        Integer id = userRepository.getUserIdByUUID(uuid);
 
-        if (validatedPageSize.isPresent()) {
-            userPageSize = (Integer) validatedPageSize.get();
+        List<UserTransaction> userTransactionList = userTransactionRepository.getTransactionsByUserId(id);
+
+        List<GetUserHistoryDto> userHistoryDtoList = userTransactionList.stream()
+                .map(n -> new GetUserHistoryDto(n.getName(), n.getQuantity(), n.getDate()))
+                .collect(Collectors.toList());
+
+        if (userTransactionList.size() < validatedPageSize) {
+            return new GetUserHistoryResponse(userHistoryDtoList);
         }
 
-        List<GetUserHistoryTransactionDTO> userTransactionList = transactionRepository.getTransactionsByUUID(uuid);
+        return new GetUserHistoryResponse(userHistoryDtoList.subList(0, validatedPageSize));
+    }
 
-        if (userTransactionList.size() < userPageSize) {
-            return new GetUserHistoryResponse(userTransactionList);
+    private Integer checkPageSize(Integer userPageSize) {
+        Integer minPageSize = config.getMinUserPageSize();
+        Integer maxPageSize = config.getMaxUserPageSize();
+
+        if (userPageSize < minPageSize) {
+            return minPageSize;
         }
-
-        return new GetUserHistoryResponse(userTransactionList.subList(0, userPageSize));
+        if (userPageSize > maxPageSize) {
+            return maxPageSize;
+        }
+        return userPageSize;
     }
 }

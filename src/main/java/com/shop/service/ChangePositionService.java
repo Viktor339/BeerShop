@@ -1,10 +1,10 @@
 package com.shop.service;
 
 import com.shop.config.Config;
+import com.shop.model.BeerInfo;
 import com.shop.model.BottleBeerData;
 import com.shop.repository.PositionRepository;
 import com.shop.service.exception.PositionNotFoundException;
-import com.shop.service.validator.ContainerTypeValidator;
 import com.shop.service.validator.ContainerVolumeValidator;
 import com.shop.service.validator.NotEmptyFieldValidator;
 import com.shop.service.validator.Validator;
@@ -27,35 +27,32 @@ public class ChangePositionService {
         this.positionRepository = positionRepository;
 
         changePositionRequestValidator = Arrays.asList(
-                new NotEmptyFieldValidator<>(ChangePositionRequest::getName, "Name is null or empty"),
-                new NotEmptyFieldValidator<>(ChangePositionRequest::getContainerType, "Container type is null or empty"),
-                new NotEmptyFieldValidator<>(ChangePositionRequest::getNewContainerVolume, "New container volume is null or empty"),
-                new NotEmptyFieldValidator<>(ChangePositionRequest::getNewQuantity, "New quantity is null or empty"),
-                new ContainerVolumeValidator<>(ChangePositionRequest::getNewContainerVolume, config.getMinContainerVolume(), config.getMaxContainerVolume(), "Incorrect container volume"),
-                new ContainerTypeValidator<>(ChangePositionRequest::getContainerType, "Incorrect container type")
+                new NotEmptyFieldValidator<>(ChangePositionRequest::getId, "Id is null or empty"),
+                new NotEmptyFieldValidator<>(ChangePositionRequest::getContainerVolume, "Container volume is null or empty"),
+                new NotEmptyFieldValidator<>(ChangePositionRequest::getQuantity, "Quantity is null or empty"),
+                new ContainerVolumeValidator<>(ChangePositionRequest::getContainerVolume, config.getMinContainerVolume(), config.getMaxContainerVolume(), "Incorrect container volume")
         );
     }
 
 
     public ChangePositionResponse change(ChangePositionRequest changePositionRequest) {
 
-        String name = changePositionRequest.getName();
-        String containerType = changePositionRequest.getContainerType();
-        Double newContainerVolume = changePositionRequest.getNewContainerVolume();
-        Integer newQuantity = changePositionRequest.getNewQuantity();
+        Long id = changePositionRequest.getId();
+        Double containerVolume = changePositionRequest.getContainerVolume();
+        Double quantity = changePositionRequest.getQuantity();
 
         validatorService.validate(changePositionRequestValidator, changePositionRequest);
 
-        if (!positionRepository.existsPositionByNameOrContainerType(name, containerType)) {
+        if (!positionRepository.existsPositionById(id)) {
             throw new PositionNotFoundException("Position not found");
         }
 
-        ChangePositionResponse changePositionResponse = ChangePositionResponse.builder()
-                .name(name)
-                .containerType(containerType)
-                .beerInfo(new BottleBeerData(newContainerVolume, newQuantity))
-                .build();
+        BeerInfo beerInfo = new BottleBeerData(containerVolume, quantity);
+        positionRepository.update(beerInfo, id);
 
-        return positionRepository.update(changePositionResponse);
+        return ChangePositionResponse.builder()
+                .id(id)
+                .beerInfo(beerInfo)
+                .build();
     }
 }

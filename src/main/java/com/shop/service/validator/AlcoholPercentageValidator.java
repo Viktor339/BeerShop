@@ -15,7 +15,7 @@ public class AlcoholPercentageValidator implements Validator<AddPositionRequest>
     }
 
     @Override
-    public String getResult() {
+    public String getMessage() {
         return message;
     }
 }

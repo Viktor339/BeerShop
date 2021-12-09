@@ -12,7 +12,5 @@ import lombok.RequiredArgsConstructor;
 @Builder(toBuilder = true)
 public class ChangePositionResponse {
     private long id;
-    private String name;
-    private String containerType;
     private BeerInfo beerInfo;
 }

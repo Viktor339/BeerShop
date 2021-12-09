@@ -8,5 +8,5 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class GetUserHistoryResponse {
-    private List<GetUserHistoryTransactionDTO> itemList;
+    private List<GetUserHistoryDto> entries;
 }
