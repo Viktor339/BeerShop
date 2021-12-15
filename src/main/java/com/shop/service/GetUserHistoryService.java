@@ -11,6 +11,9 @@ import com.shop.servlet.dto.GetUserHistoryResponse;
 import com.shop.servlet.request.GetUserHistoryRequest;
 import lombok.RequiredArgsConstructor;
 
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,6 +25,7 @@ public class GetUserHistoryService {
     private final List<Validator<GetUserHistoryRequest>> getUserHistoryRequestValidator;
     private final Config config;
     private final UserRepository userRepository;
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).withZone(ZoneOffset.UTC);
 
 
     public GetUserHistoryService(ValidatorService validatorService, UserTransactionRepository userTransactionRepository, Config config, UserRepository userRepository) {
@@ -43,17 +47,13 @@ public class GetUserHistoryService {
         Integer validatedPageSize = checkPageSize(getUserHistoryRequest.getQuantity());
         Integer id = userRepository.getUserIdByUUID(uuid);
 
-        List<UserTransaction> userTransactionList = userTransactionRepository.getTransactionsByUserId(id);
+        List<UserTransaction> userTransactionList = userTransactionRepository.getTransactionsByUserId(id, validatedPageSize);
 
         List<GetUserHistoryDto> userHistoryDtoList = userTransactionList.stream()
-                .map(n -> new GetUserHistoryDto(n.getName(), n.getQuantity(), n.getDate()))
+                .map(n -> new GetUserHistoryDto(n.getPositionId(), n.getQuantity(), formatter.format(n.getCreated())))
                 .collect(Collectors.toList());
 
-        if (userTransactionList.size() < validatedPageSize) {
-            return new GetUserHistoryResponse(userHistoryDtoList);
-        }
-
-        return new GetUserHistoryResponse(userHistoryDtoList.subList(0, validatedPageSize));
+        return new GetUserHistoryResponse(userHistoryDtoList);
     }
 
     private Integer checkPageSize(Integer userPageSize) {

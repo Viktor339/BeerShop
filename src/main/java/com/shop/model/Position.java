@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 @Builder(toBuilder = true)
 public class Position {
-    private long id;
+    private Integer id;
     private String name;
     private String beerType;
     private Double alcoholPercentage;

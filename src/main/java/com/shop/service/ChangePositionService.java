@@ -39,7 +39,7 @@ public class ChangePositionService {
 
         Long id = changePositionRequest.getId();
         Double containerVolume = changePositionRequest.getContainerVolume();
-        Double quantity = changePositionRequest.getQuantity();
+        Integer quantity = changePositionRequest.getQuantity();
 
         validatorService.validate(changePositionRequestValidator, changePositionRequest);
 

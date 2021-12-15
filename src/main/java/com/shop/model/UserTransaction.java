@@ -3,13 +3,13 @@ package com.shop.model;
 import lombok.Builder;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.Instant;
 
 @Data
 @Builder(toBuilder = true)
 public class UserTransaction {
-    private String name;
-    private Integer quantity;
-    private Integer user_id;
-    private Date date;
+    private Integer positionId;
+    private BuyBeerQuantity quantity;
+    private Integer userId;
+    private Instant created;
 }

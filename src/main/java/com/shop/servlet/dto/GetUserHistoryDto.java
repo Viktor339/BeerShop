@@ -1,19 +1,15 @@
 package com.shop.servlet.dto;
 
+import com.shop.model.BuyBeerQuantity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-
-import java.util.Date;
 
 @Data
 @Builder(toBuilder = true)
 @AllArgsConstructor
 public class GetUserHistoryDto {
-    private String name;
-    private Integer quantity;
-    private Date date;
+    private Integer positionId;
+    private BuyBeerQuantity quantity;
+    private Object date;
 }

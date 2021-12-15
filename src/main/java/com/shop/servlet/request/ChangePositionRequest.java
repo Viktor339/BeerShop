@@ -6,5 +6,5 @@ import lombok.Data;
 public class ChangePositionRequest {
     private Long id;
     private Double containerVolume;
-    private Double quantity;
+    private Integer quantity;
 }

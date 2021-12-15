@@ -1,11 +1,14 @@
 package com.shop.service;
 
-import com.shop.model.BuyBeerData;
-import com.shop.model.Position;
+import com.shop.model.BuyBottleBeerData;
+import com.shop.model.BuyDraftBeerData;
 import com.shop.repository.PositionRepository;
 import com.shop.repository.UserRepository;
 import com.shop.repository.UserTransactionRepository;
+import com.shop.service.exception.ValidatorException;
+import com.shop.service.performer.BuyBottleBeerDataValidatorPerformer;
 import com.shop.service.performer.BuyBottleBeerPerformer;
+import com.shop.service.performer.BuyDraftBeerDataValidatorPerformer;
 import com.shop.service.performer.BuyDraftBeerPerformer;
 import com.shop.service.performer.Performer;
 import com.shop.service.validator.NotEmptyFieldValidator;
@@ -17,59 +20,67 @@ import lombok.RequiredArgsConstructor;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 public class BuyPositionService {
     private final PositionRepository positionRepository;
     private final UserTransactionRepository userTransactionRepository;
-    private final List<Performer<BuyPositionRequest, Map<Position, Double>>> buyBottleBeerPerformer;
-    private final ValidatorService validatorService;
+    private final List<Performer<BuyPositionRequest, List<BuyPositionDto>>> buyBeerPerformer;
     private final UserRepository userRepository;
 
-    private final List<Validator<BuyBeerData>> buyBeerDataValidator;
+    private final List<Validator<BuyDraftBeerData>> buyDraftBeerDataValidator;
+    private final List<Validator<BuyBottleBeerData>> buyBottleBeerDataValidator;
+    private final List<Performer<BuyPositionRequest, String>> buyBeerDataValidatorPerformer;
 
 
-    public BuyPositionService(PositionRepository positionRepository, ValidatorService validatorService, UserTransactionRepository userTransactionRepository, UserRepository userRepository) {
+    public BuyPositionService(PositionRepository positionRepository, UserTransactionRepository userTransactionRepository, UserRepository userRepository) {
         this.userTransactionRepository = userTransactionRepository;
         this.positionRepository = positionRepository;
-        this.validatorService = validatorService;
         this.userRepository = userRepository;
 
-        buyBottleBeerPerformer = Arrays.asList(
+        buyBeerPerformer = Arrays.asList(
                 new BuyBottleBeerPerformer(positionRepository),
                 new BuyDraftBeerPerformer(positionRepository)
         );
 
-        buyBeerDataValidator = Arrays.asList(
-                new NotEmptyFieldValidator<>(BuyBeerData::getId, "Id is null or empty"),
-                new NotEmptyFieldValidator<>(BuyBeerData::getQuantity, "Quantity is null or empty")
+        buyDraftBeerDataValidator = Arrays.asList(
+                new NotEmptyFieldValidator<>(BuyDraftBeerData::getId, "Id is null or empty"),
+                new NotEmptyFieldValidator<>(BuyDraftBeerData::getQuantity, "Quantity is null or empty")
+        );
+
+        buyBottleBeerDataValidator = Arrays.asList(
+                new NotEmptyFieldValidator<>(BuyBottleBeerData::getId, "Id is null or empty"),
+                new NotEmptyFieldValidator<>(BuyBottleBeerData::getQuantity, "Quantity is null or empty")
+        );
+
+        buyBeerDataValidatorPerformer = Arrays.asList(
+                new BuyDraftBeerDataValidatorPerformer(buyDraftBeerDataValidator),
+                new BuyBottleBeerDataValidatorPerformer(buyBottleBeerDataValidator)
         );
     }
 
     public void buy(BuyPositionRequest buyPositionRequest, Object uuid) {
 
-        Stream.of(buyPositionRequest.getDraft(), buyPositionRequest.getBottle())
-                .flatMap(Collection::stream)
-                .forEach(beer -> validatorService.validate(buyBeerDataValidator, beer));
+        String message = buyBeerDataValidatorPerformer.stream()
+                .filter(n -> n.isValid(buyPositionRequest))
+                .map(n -> n.perform(buyPositionRequest))
+                .filter(Objects::nonNull)
+                .findFirst().orElse(null);
+        if (message != null) {
+            throw new ValidatorException(message);
+        }
 
         Integer id = userRepository.getUserIdByUUID(uuid);
 
-        buyBottleBeerPerformer.stream()
+        buyBeerPerformer.stream()
                 .filter(n -> n.isValid(buyPositionRequest))
                 .map(n -> n.perform(buyPositionRequest))
-                .flatMap(positions -> positions.entrySet().stream())
-                .forEach(position -> {
-                    positionRepository.updatePositionAfterPurchase(position.getKey());
-
-                    BuyPositionDto buyPositionDto = BuyPositionDto.builder()
-                            .userId(id)
-                            .name(position.getKey().getName())
-                            .quantity(position.getValue())
-                            .build();
-
-                    userTransactionRepository.save(buyPositionDto);
+                .flatMap(Collection::stream)
+                .forEach(dto -> {
+                    positionRepository.updatePositionAfterPurchase(dto.getPosition());
+                    dto.setUserId(id);
+                    userTransactionRepository.save(dto);
                 });
     }
 }

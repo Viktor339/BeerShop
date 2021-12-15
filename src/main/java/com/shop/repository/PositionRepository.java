@@ -15,25 +15,29 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.Calendar;
 import java.util.Optional;
+import java.util.TimeZone;
 
 public class PositionRepository {
 
     private static final String SAVE_POSITION =
-            "insert into positions (name,beerType,alcoholPercentage,bitterness,containerType,created,modified,beerInfo) values (?,?,?,?,?,?,?,to_json(?::json))";
-    private static final String GET_POSITION_BY_NAME_AND_CONTAINER_TYPE = "select * from positions where name =? and containerType= ?";
+            "insert into positions (name,beer_type,alcohol_percentage,bitterness,container_type,created,modified,beer_info) values (?,?,?,?,?,?,?,to_json(?::json))";
+    private static final String GET_POSITION_BY_NAME_AND_CONTAINER_TYPE = "select * from positions where name =? and container_type= ?";
     private static final String GET_POSITION_BY_ID = "select * from positions where id =?";
-    private static final String UPDATE_POSITION = "update positions set beerInfo=to_json(?::json),modified=? where id=?";
-    private static final String UPDATE_POSITION_AFTER_PURCHASE = "update positions set beerInfo=to_json(?::json) where name=? and containerType=?";
+    private static final String UPDATE_POSITION = "update positions set beer_info=to_json(?::json),modified=? where id=?";
+    private static final String UPDATE_POSITION_AFTER_PURCHASE = "update positions set beer_info=to_json(?::json) where name=? and container_type=?";
     private static final String SELECT_POSITION_BY_ID = "select * from positions where id=?";
+    public static final Calendar UTC = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
     private static final String ID = "id";
     private static final String NAME = "name";
-    private static final String BEER_TYPE = "beerType";
-    private static final String ALCOHOL_PERCENTAGE = "alcoholPercentage";
+    private static final String BEER_TYPE = "beer_type";
+    private static final String ALCOHOL_PERCENTAGE = "alcohol_percentage";
     private static final String BITTERNESS = "bitterness";
-    private static final String CONTAINER_TYPE = "containerType";
-    private static final String BEER_INFO = "beerInfo";
+    private static final String CONTAINER_TYPE = "container_type";
+    private static final String BEER_INFO = "beer_info";
 
     private final Config config;
     private final ObjectMapper objectMapper;
@@ -79,8 +83,9 @@ public class PositionRepository {
             preparedStatement.setDouble(3, addPositionDto.getAlcoholPercentage());
             preparedStatement.setInt(4, addPositionDto.getBitterness());
             preparedStatement.setString(5, addPositionDto.getContainerType());
-            preparedStatement.setObject(6, LocalDateTime.now());
-            preparedStatement.setObject(7, LocalDateTime.now());
+            Instant eventOccurred = Instant.now();
+            preparedStatement.setTimestamp(6, Timestamp.from(eventOccurred), UTC);
+            preparedStatement.setTimestamp(7, Timestamp.from(eventOccurred), UTC);
             preparedStatement.setString(8, json);
 
             preparedStatement.executeUpdate();
@@ -104,7 +109,8 @@ public class PositionRepository {
             Connection connection = getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_POSITION);
             preparedStatement.setString(1, json);
-            preparedStatement.setObject(2, LocalDateTime.now());
+            Instant eventOccurred = Instant.now();
+            preparedStatement.setTimestamp(2, Timestamp.from(eventOccurred), UTC);
             preparedStatement.setLong(3, id);
 
             preparedStatement.executeUpdate();
@@ -128,7 +134,7 @@ public class PositionRepository {
 
             while (rs.next()) {
                 position = Position.builder()
-                        .id(rs.getLong(ID))
+                        .id(rs.getInt(ID))
                         .name(rs.getString(NAME))
                         .beerType(rs.getString(BEER_TYPE))
                         .alcoholPercentage(rs.getDouble(ALCOHOL_PERCENTAGE))
@@ -166,7 +172,7 @@ public class PositionRepository {
         }
     }
 
-    public boolean existsPositionByNameOrContainerType(String name, String containerType) {
+    public boolean existsPositionByNameAndContainerType(String name, String containerType) {
 
         try {
             Connection connection = getConnection();

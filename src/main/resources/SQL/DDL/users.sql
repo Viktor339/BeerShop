@@ -20,3 +20,4 @@ create unique index users_username_uindex
 
 create unique index users_uuid_uindex
 	on users (uuid);
+

@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class BuyBeerData {
-    private Long id;
-    private Double quantity;
+public class BottleBuyBeerQuantity implements BuyBeerQuantity {
+    private Integer bottles;
 }

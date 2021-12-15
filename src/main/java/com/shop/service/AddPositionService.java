@@ -65,7 +65,7 @@ public class AddPositionService {
 
         validatorService.validate(positionRequestValidator, addPositionRequest);
 
-        if (positionRepository.existsPositionByNameOrContainerType(addPositionRequest.getName(), addPositionRequest.getContainerType())) {
+        if (positionRepository.existsPositionByNameAndContainerType(addPositionRequest.getName(), addPositionRequest.getContainerType())) {
             throw new PositionAlreadyExistsException("Position already exists");
         }
 

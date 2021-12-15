@@ -1,19 +1,21 @@
 package com.shop.service.performer;
 
-import com.shop.model.BuyBeerData;
+import com.shop.model.BuyDraftBeerData;
 import com.shop.model.DraftBeerData;
+import com.shop.model.DraftBuyBeerQuantity;
 import com.shop.model.Position;
 import com.shop.repository.PositionRepository;
 import com.shop.service.exception.AvailableQuantityExceeded;
 import com.shop.service.exception.PositionNotFoundException;
+import com.shop.servlet.dto.BuyPositionDto;
 import com.shop.servlet.request.BuyPositionRequest;
 import lombok.RequiredArgsConstructor;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 @RequiredArgsConstructor
-public class BuyDraftBeerPerformer implements Performer<BuyPositionRequest, Map<Position, Double>> {
+public class BuyDraftBeerPerformer implements Performer<BuyPositionRequest, List<BuyPositionDto>> {
     private final PositionRepository positionRepository;
 
     @Override
@@ -22,11 +24,11 @@ public class BuyDraftBeerPerformer implements Performer<BuyPositionRequest, Map<
     }
 
     @Override
-    public Map<Position, Double> perform(BuyPositionRequest value) {
+    public List<BuyPositionDto> perform(BuyPositionRequest value) {
 
-        Map<Position, Double> positionByQuantity = new HashMap<>();
+        List<BuyPositionDto> buyPositionDtoList = new ArrayList<>();
 
-        for (BuyBeerData draftBeer : value.getDraft()) {
+        for (BuyDraftBeerData draftBeer : value.getDraft()) {
 
             Position position = positionRepository.findPositionById(draftBeer.getId(), DraftBeerData.class)
                     .orElseThrow(() -> new PositionNotFoundException("Position not found"));
@@ -41,9 +43,15 @@ public class BuyDraftBeerPerformer implements Performer<BuyPositionRequest, Map<
             draftBeerData.setAvailableLiters(quantity - draftBeer.getQuantity());
             position.setBeerInfo(draftBeerData);
 
-            positionByQuantity.put(position, draftBeer.getQuantity());
+            BuyPositionDto buyPositionDto = BuyPositionDto.builder()
+                    //  .userId(id)
+                    .position(position)
+                    .quantity(new DraftBuyBeerQuantity((draftBeer.getQuantity())))
+                    .quantityType("DraftBuyBeerQuantity")
+                    .build();
+            buyPositionDtoList.add(buyPositionDto);
         }
 
-        return positionByQuantity;
+        return buyPositionDtoList;
     }
 }

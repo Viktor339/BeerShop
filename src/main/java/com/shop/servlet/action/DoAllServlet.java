@@ -2,8 +2,8 @@ package com.shop.servlet.action;
 
 import com.shop.config.Config;
 import com.shop.repository.PositionRepository;
-import com.shop.repository.UserTransactionRepository;
 import com.shop.repository.UserRepository;
+import com.shop.repository.UserTransactionRepository;
 import com.shop.service.AddPositionService;
 import com.shop.service.BuyPositionService;
 import com.shop.service.ChangePositionService;
@@ -46,14 +46,14 @@ public class DoAllServlet extends HttpServlet {
         Config config = new Config();
         PositionRepository positionRepository = new PositionRepository(objectMapper, config);
         ValidatorService validatorService = new ValidatorService();
-        UserTransactionRepository userTransactionRepository = new UserTransactionRepository(config);
+        UserTransactionRepository userTransactionRepository = new UserTransactionRepository(config,objectMapper);
 
         response = new Response(objectMapper);
         postActions = Arrays.asList(
                 new RegistrationAction(new RegistrationService(userRepository), jsonParseService, response),
                 new LoginAction(new LoginService(userRepository), jsonParseService, response),
                 new AddPositionAction(new AddPositionService(positionRepository, config, validatorService), jsonParseService, response),
-                new BuyPositionAction(new BuyPositionService(positionRepository, validatorService, userTransactionRepository, userRepository), jsonParseService, response)
+                new BuyPositionAction(new BuyPositionService(positionRepository, userTransactionRepository, userRepository), jsonParseService, response)
         );
 
         putActions = Collections.singletonList(
