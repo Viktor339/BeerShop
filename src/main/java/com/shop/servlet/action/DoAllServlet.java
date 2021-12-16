@@ -3,8 +3,11 @@ package com.shop.servlet.action;
 import com.shop.config.Config;
 import com.shop.repository.PositionRepository;
 import com.shop.repository.UserRepository;
+import com.shop.repository.UserTransactionRepository;
 import com.shop.service.AddPositionService;
+import com.shop.service.BuyPositionService;
 import com.shop.service.ChangePositionService;
+import com.shop.service.GetUserHistoryService;
 import com.shop.service.JSONParseService;
 import com.shop.service.LoginService;
 import com.shop.service.RegistrationService;
@@ -14,6 +17,7 @@ import com.shop.service.exception.ActionNotFoundException;
 import com.shop.service.exception.ConfigException;
 import com.shop.service.exception.UnableToExecuteQueryException;
 import com.shop.service.exception.UnableToGetConnectionException;
+import com.shop.service.exception.UnableToPerformSerializationException;
 import com.shop.service.exception.UnacceptableDatabaseDriverException;
 import com.shop.servlet.dto.InformationResponse;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -30,6 +34,7 @@ import java.util.List;
 public class DoAllServlet extends HttpServlet {
     private List<Action> postActions;
     private List<Action> putActions;
+    private List<Action> getActions;
     private Response response;
 
     @Override
@@ -41,16 +46,22 @@ public class DoAllServlet extends HttpServlet {
         Config config = new Config();
         PositionRepository positionRepository = new PositionRepository(objectMapper, config);
         ValidatorService validatorService = new ValidatorService();
+        UserTransactionRepository userTransactionRepository = new UserTransactionRepository(config,objectMapper);
 
         response = new Response(objectMapper);
         postActions = Arrays.asList(
                 new RegistrationAction(new RegistrationService(userRepository), jsonParseService, response),
                 new LoginAction(new LoginService(userRepository), jsonParseService, response),
-                new AddPositionAction(new AddPositionService(positionRepository, config, validatorService), jsonParseService, response)
+                new AddPositionAction(new AddPositionService(positionRepository, config, validatorService), jsonParseService, response),
+                new BuyPositionAction(new BuyPositionService(positionRepository, userTransactionRepository, userRepository), jsonParseService, response)
         );
 
         putActions = Collections.singletonList(
                 new ChangePositionAction(new ChangePositionService(positionRepository, config, validatorService), jsonParseService, response)
+        );
+
+        getActions = Collections.singletonList(
+                new GetUserHistoryAction(new GetUserHistoryService(validatorService, userTransactionRepository, config, userRepository), jsonParseService, response)
         );
     }
 
@@ -78,6 +89,27 @@ public class DoAllServlet extends HttpServlet {
 
         try {
             final Action action = putActions.stream()
+                    .filter(act -> act.isValid(req))
+                    .findFirst()
+                    .orElseThrow(() -> new ActionNotFoundException("Action not found"));
+            action.doAction(req, resp);
+
+        } catch (ActionNotFoundException |
+                UnableToExecuteQueryException |
+                UnableToGetConnectionException |
+                UnacceptableDatabaseDriverException |
+                ConfigException |
+                UnableToPerformSerializationException e) {
+            response.send(resp, new InformationResponse(e.getMessage()), HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+
+        try {
+            final Action action = getActions.stream()
                     .filter(act -> act.isValid(req))
                     .findFirst()
                     .orElseThrow(() -> new ActionNotFoundException("Action not found"));

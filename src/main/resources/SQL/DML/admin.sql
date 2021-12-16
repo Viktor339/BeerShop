@@ -1,0 +1,1 @@
+INSERT INTO public.users (name, email, password, uuid, role, id) VALUES ('admin', 'admin', 'admin', null, 'admin', DEFAULT)

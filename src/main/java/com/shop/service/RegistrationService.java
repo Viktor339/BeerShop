@@ -5,7 +5,7 @@ import com.shop.service.exception.UserAlreadyExistsException;
 import com.shop.service.exception.ValidatorException;
 import com.shop.service.validator.EmailValidator;
 import com.shop.service.validator.NameValidator;
-import com.shop.service.validator.NotNullFieldValidator;
+import com.shop.service.validator.NotEmptyFieldValidator;
 import com.shop.service.validator.Validator;
 import com.shop.servlet.request.RegistrationRequest;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -21,9 +21,9 @@ public class RegistrationService {
     public RegistrationService(UserRepository userRepository) {
         this.userRepository = userRepository;
         validators = Arrays.asList(
-                new NotNullFieldValidator<>(RegistrationRequest::getPassword, "Password is null"),
-                new NotNullFieldValidator<>(RegistrationRequest::getEmail, "Email is null"),
-                new NotNullFieldValidator<>(RegistrationRequest::getName, "Name is null"),
+                new NotEmptyFieldValidator<>(RegistrationRequest::getPassword, "Password is null"),
+                new NotEmptyFieldValidator<>(RegistrationRequest::getEmail, "Email is null"),
+                new NotEmptyFieldValidator<>(RegistrationRequest::getName, "Name is null"),
                 new EmailValidator(),
                 new NameValidator()
         );
@@ -44,7 +44,7 @@ public class RegistrationService {
             throw new ValidatorException(invalidMessage.get());
         }
 
-        if (userRepository.getUserByNameOrEmail(name, email)) {
+        if (userRepository.existsUserByNameOrEmail(name, email)) {
             throw new UserAlreadyExistsException("Username or email already exists");
         }
         String UUID = DigestUtils.md5Hex(name);
