@@ -7,9 +7,12 @@ import com.shop.repository.UserTransactionRepository;
 import com.shop.service.AddPositionService;
 import com.shop.service.BuyPositionService;
 import com.shop.service.ChangePositionService;
+import com.shop.service.GetAllUsersHistoryService;
+import com.shop.service.GetAvailablePositionsService;
 import com.shop.service.GetUserHistoryService;
 import com.shop.service.JSONParseService;
 import com.shop.service.LoginService;
+import com.shop.service.PageSizeValidatorService;
 import com.shop.service.RegistrationService;
 import com.shop.service.Response;
 import com.shop.service.ValidatorService;
@@ -46,7 +49,8 @@ public class DoAllServlet extends HttpServlet {
         Config config = new Config();
         PositionRepository positionRepository = new PositionRepository(objectMapper, config);
         ValidatorService validatorService = new ValidatorService();
-        UserTransactionRepository userTransactionRepository = new UserTransactionRepository(config,objectMapper);
+        UserTransactionRepository userTransactionRepository = new UserTransactionRepository(config, objectMapper);
+        PageSizeValidatorService pageSizeValidatorService = new PageSizeValidatorService();
 
         response = new Response(objectMapper);
         postActions = Arrays.asList(
@@ -60,8 +64,10 @@ public class DoAllServlet extends HttpServlet {
                 new ChangePositionAction(new ChangePositionService(positionRepository, config, validatorService), jsonParseService, response)
         );
 
-        getActions = Collections.singletonList(
-                new GetUserHistoryAction(new GetUserHistoryService(validatorService, userTransactionRepository, config, userRepository), jsonParseService, response)
+        getActions = Arrays.asList(
+                new GetUserHistoryAction(new GetUserHistoryService(userTransactionRepository, config, userRepository, pageSizeValidatorService), response),
+                new GetAllUsersHistoryAction(new GetAllUsersHistoryService(userTransactionRepository, config, pageSizeValidatorService), response),
+                new GetAvailablePositionsAction(new GetAvailablePositionsService(positionRepository, config, pageSizeValidatorService), response)
         );
     }
 

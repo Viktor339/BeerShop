@@ -23,7 +23,7 @@ public class ChangePositionAction implements Action {
     @Override
     public boolean isValid(HttpServletRequest req) {
         String path = req.getRequestURI().substring(req.getContextPath().length());
-        return path.equals("/position") & req.getMethod().equals("PUT");
+        return path.equals("/positions") & req.getMethod().equals("PUT");
     }
 
     @Override

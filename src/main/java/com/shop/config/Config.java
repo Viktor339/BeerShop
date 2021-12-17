@@ -19,8 +19,12 @@ public class Config {
     private static final String MAX_CONTAINER_VOLUME = "validator.container.max";
     private static final String MIN_BITTERNESS = "validator.bitterness.min";
     private static final String MAX_BITTERNESS = "validator.bitterness.max";
-    private static final String MIN_USER_PAGE_SIZE = "validator.user.pageSize.min";
-    private static final String MAX_USER_PAGE_SIZE = "validator.user.pageSize.max";
+    private static final String MIN_USER_HISTORY_PURCHASE_PAGE_SIZE = "validator.user.purchase.pageSize.min";
+    private static final String MAX_USER_HISTORY_PURCHASE_PAGE_SIZE = "validator.user.purchase.pageSize.max";
+    private static final String MIN_AVAILABLE_POSITIONS_PAGE_SIZE = "validator.positions.available.pageSize.min";
+    private static final String MAX_AVAILABLE_POSITIONS_PAGE_SIZE = "validator.positions.available.pageSize.max";
+    private static final String MIN_USERS_HISTORY_PURCHASE_PAGE_SIZE = "validator.users.purchase.pageSize.min";
+    private static final String MAX_USERS_HISTORY_PURCHASE_PAGE_SIZE = "validator.users.purchase.pageSize.max";
 
 
 
@@ -76,11 +80,27 @@ public class Config {
         return Integer.parseInt(config.getProperty(MAX_BITTERNESS));
     }
 
-    public Integer getMinUserPageSize() {
-        return Integer.parseInt(config.getProperty(MIN_USER_PAGE_SIZE));
+    public Integer getMinUserHistoryPurchasePageSize() {
+        return Integer.parseInt(config.getProperty(MIN_USER_HISTORY_PURCHASE_PAGE_SIZE));
     }
 
-    public Integer getMaxUserPageSize() {
-        return Integer.parseInt(config.getProperty(MAX_USER_PAGE_SIZE));
+    public Integer getMaxUserHistoryPurchasePageSize() {
+        return Integer.parseInt(config.getProperty(MAX_USER_HISTORY_PURCHASE_PAGE_SIZE));
+    }
+
+    public Integer getMinAvailablePositionsPageSize() {
+        return Integer.parseInt(config.getProperty(MIN_AVAILABLE_POSITIONS_PAGE_SIZE));
+    }
+
+    public Integer getMaxAvailablePositionsPageSize() {
+        return Integer.parseInt(config.getProperty(MAX_AVAILABLE_POSITIONS_PAGE_SIZE));
+    }
+
+    public Integer getMinUsersHistoryPurchasePageSize() {
+        return Integer.parseInt(config.getProperty(MIN_USERS_HISTORY_PURCHASE_PAGE_SIZE));
+    }
+
+    public Integer getMaxUsersHistoryPurchasePageSize() {
+        return Integer.parseInt(config.getProperty(MAX_USERS_HISTORY_PURCHASE_PAGE_SIZE));
     }
 }
