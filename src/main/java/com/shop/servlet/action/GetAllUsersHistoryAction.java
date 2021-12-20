@@ -31,7 +31,9 @@ public class GetAllUsersHistoryAction implements Action {
             try {
 
                 Integer size = Integer.parseInt(req.getParameter("size"));
-                GetAllUsersHistoryResponse getAllUsersHistoryResponse = getAllUsersHistoryService.get(size);
+                Integer page = Integer.parseInt(req.getParameter("page"));
+
+                GetAllUsersHistoryResponse getAllUsersHistoryResponse = getAllUsersHistoryService.get(size,page);
                 response.send(resp, getAllUsersHistoryResponse, HttpServletResponse.SC_OK);
 
             } catch (NumberFormatException e) {

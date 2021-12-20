@@ -37,8 +37,9 @@ public class PositionRepository {
                     "    select id\n" +
                     "    from positions\n" +
                     "    where beer_info::jsonb @> '{\"quantity\":0}'\n" +
-                    "       or beer_info::jsonb @> '{\"availableLiters\":0.0}'\n" +
-                    ")  limit ?";
+                    "       or beer_info::jsonb @> '{\"availableLiters\":0.0}'\n)" +
+                    "    order by id\n" +
+                    "limit ? offset ?";
     public static final Calendar UTC = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
     private static final String ID = "id";
     private static final String NAME = "name";
@@ -198,7 +199,7 @@ public class PositionRepository {
         }
     }
 
-    public List<Position> getPositionByBeerInfo(Integer validatedPageSize) {
+    public List<Position> getPositionByBeerInfo(Integer validatedPageSize, Integer page) {
 
         List<Position> positionList = new ArrayList<>();
 
@@ -207,6 +208,7 @@ public class PositionRepository {
             Connection connection = getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ACTIVE_POSITION);
             preparedStatement.setLong(1, validatedPageSize);
+            preparedStatement.setInt(2, validatedPageSize * (page - 1));
 
             ResultSet rs = preparedStatement.executeQuery();
 

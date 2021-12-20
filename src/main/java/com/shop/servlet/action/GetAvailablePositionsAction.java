@@ -30,7 +30,9 @@ public class GetAvailablePositionsAction implements Action {
             try {
 
                 Integer size = Integer.parseInt(req.getParameter("size"));
-                GetAvailablePositionsResponse getAvailablePositionsResponse = getAvailablePositionsService.get(size);
+                Integer page = Integer.parseInt(req.getParameter("page"));
+
+                GetAvailablePositionsResponse getAvailablePositionsResponse = getAvailablePositionsService.get(size, page);
                 response.send(resp, getAvailablePositionsResponse, HttpServletResponse.SC_OK);
 
             } catch (NumberFormatException e) {

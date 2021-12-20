@@ -18,26 +18,28 @@ public class GetUserHistoryService {
     private final Config config;
     private final UserRepository userRepository;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).withZone(ZoneOffset.UTC);
-    private final PageSizeValidatorService pageSizeValidatorService;
+    private final PageService pageService;
 
 
-    public GetUserHistoryService(UserTransactionRepository userTransactionRepository, Config config, UserRepository userRepository, PageSizeValidatorService pageSizeValidatorService) {
+    public GetUserHistoryService(UserTransactionRepository userTransactionRepository, Config config, UserRepository userRepository, PageService pageService) {
         this.userTransactionRepository = userTransactionRepository;
         this.config = config;
         this.userRepository = userRepository;
-        this.pageSizeValidatorService = pageSizeValidatorService;
+        this.pageService = pageService;
     }
 
 
-    public GetUserHistoryResponse get(Integer pageSize, Object uuid) {
+    public GetUserHistoryResponse get(Integer pageSize,Integer page, Object uuid) {
 
-        Integer validatedPageSize = pageSizeValidatorService.validate(pageSize,
+        pageService.validatePage(page);
+
+        Integer validatedPageSize = pageService.getSize(pageSize,
                 config.getMinUserHistoryPurchasePageSize(),
                 config.getMaxUserHistoryPurchasePageSize());
 
         Integer id = userRepository.getUserIdByUUID(uuid);
 
-        List<UserTransaction> userTransactionList = userTransactionRepository.getTransactionsByUserId(id, validatedPageSize);
+        List<UserTransaction> userTransactionList = userTransactionRepository.getTransactionsByUserId(id, validatedPageSize,page);
 
         List<GetUserHistoryDto> userHistoryDtoList = userTransactionList.stream()
                 .map(n -> new GetUserHistoryDto(n.getPositionId(), n.getQuantity(), formatter.format(n.getCreated())))

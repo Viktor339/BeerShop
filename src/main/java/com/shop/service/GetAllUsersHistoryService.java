@@ -13,22 +13,24 @@ public class GetAllUsersHistoryService {
 
     private final UserTransactionRepository userTransactionRepository;
     private final Config config;
-    private final PageSizeValidatorService pageSizeValidatorService;
+    private final PageService pageService;
 
 
-    public GetAllUsersHistoryService(UserTransactionRepository userTransactionRepository, Config config, PageSizeValidatorService pageSizeValidatorService) {
+    public GetAllUsersHistoryService(UserTransactionRepository userTransactionRepository, Config config, PageService pageService) {
         this.userTransactionRepository = userTransactionRepository;
         this.config = config;
-        this.pageSizeValidatorService = pageSizeValidatorService;
+        this.pageService = pageService;
     }
 
-    public GetAllUsersHistoryResponse get(Integer pageSize) {
+    public GetAllUsersHistoryResponse get(Integer pageSize, Integer page) {
 
-        Integer validPageSize = pageSizeValidatorService.validate(pageSize,
+        pageService.validatePage(page);
+
+        Integer validPageSize = pageService.getSize(pageSize,
                 config.getMinUsersHistoryPurchasePageSize(),
                 config.getMaxUsersHistoryPurchasePageSize());
 
-        List<UserTransaction> userTransactionList = userTransactionRepository.getAllTransactions(validPageSize);
+        List<UserTransaction> userTransactionList = userTransactionRepository.getAllTransactions(validPageSize, page);
 
         List<GetAllUsersHistoryDto> userHistoryDtoList = userTransactionList.stream()
                 .map(n -> new GetAllUsersHistoryDto(n.getUserId(), n.getPositionId()))

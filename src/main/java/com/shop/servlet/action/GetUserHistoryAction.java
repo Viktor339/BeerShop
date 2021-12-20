@@ -31,7 +31,9 @@ public class GetUserHistoryAction implements Action {
 
                 Object uuid = req.getSession().getAttribute("UUID");
                 Integer size = Integer.parseInt(req.getParameter("size"));
-                GetUserHistoryResponse getUserHistoryResponse = getUserHistoryService.get(size, uuid);
+                Integer page = Integer.parseInt(req.getParameter("page"));
+
+                GetUserHistoryResponse getUserHistoryResponse = getUserHistoryService.get(size, page, uuid);
                 response.send(resp, getUserHistoryResponse, HttpServletResponse.SC_OK);
 
             } catch (NumberFormatException e) {

@@ -13,23 +13,25 @@ public class GetAvailablePositionsService {
 
     private final PositionRepository positionRepository;
     private final Config config;
-    private final PageSizeValidatorService pageSizeValidatorService;
+    private final PageService pageService;
 
-    public GetAvailablePositionsService(PositionRepository positionRepository, Config config, PageSizeValidatorService pageSizeValidatorService) {
+    public GetAvailablePositionsService(PositionRepository positionRepository, Config config, PageService pageService) {
         this.positionRepository = positionRepository;
         this.config = config;
-        this.pageSizeValidatorService = pageSizeValidatorService;
+        this.pageService = pageService;
 
     }
 
-    public GetAvailablePositionsResponse get(Integer pageSize) {
+    public GetAvailablePositionsResponse get(Integer pageSize,Integer page) {
 
-        Integer validPageSize = pageSizeValidatorService.validate(pageSize,
+        pageService.validatePage(page);
+
+        Integer validPageSize = pageService.getSize(pageSize,
                 config.getMinAvailablePositionsPageSize(),
                 config.getMaxAvailablePositionsPageSize());
 
 
-        List<Position> positionList = positionRepository.getPositionByBeerInfo(validPageSize);
+        List<Position> positionList = positionRepository.getPositionByBeerInfo(validPageSize,page);
 
 
         List<GetAvailablePositionsDto> availablePositionsDtoList = positionList.stream()

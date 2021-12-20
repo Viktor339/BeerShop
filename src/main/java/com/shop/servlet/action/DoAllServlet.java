@@ -12,7 +12,7 @@ import com.shop.service.GetAvailablePositionsService;
 import com.shop.service.GetUserHistoryService;
 import com.shop.service.JSONParseService;
 import com.shop.service.LoginService;
-import com.shop.service.PageSizeValidatorService;
+import com.shop.service.PageService;
 import com.shop.service.RegistrationService;
 import com.shop.service.Response;
 import com.shop.service.ValidatorService;
@@ -50,7 +50,7 @@ public class DoAllServlet extends HttpServlet {
         PositionRepository positionRepository = new PositionRepository(objectMapper, config);
         ValidatorService validatorService = new ValidatorService();
         UserTransactionRepository userTransactionRepository = new UserTransactionRepository(config, objectMapper);
-        PageSizeValidatorService pageSizeValidatorService = new PageSizeValidatorService();
+        PageService pageService = new PageService();
 
         response = new Response(objectMapper);
         postActions = Arrays.asList(
@@ -65,9 +65,9 @@ public class DoAllServlet extends HttpServlet {
         );
 
         getActions = Arrays.asList(
-                new GetUserHistoryAction(new GetUserHistoryService(userTransactionRepository, config, userRepository, pageSizeValidatorService), response),
-                new GetAllUsersHistoryAction(new GetAllUsersHistoryService(userTransactionRepository, config, pageSizeValidatorService), response),
-                new GetAvailablePositionsAction(new GetAvailablePositionsService(positionRepository, config, pageSizeValidatorService), response)
+                new GetUserHistoryAction(new GetUserHistoryService(userTransactionRepository, config, userRepository, pageService), response),
+                new GetAllUsersHistoryAction(new GetAllUsersHistoryService(userTransactionRepository, config, pageService), response),
+                new GetAvailablePositionsAction(new GetAvailablePositionsService(positionRepository, config, pageService), response)
         );
     }
 
