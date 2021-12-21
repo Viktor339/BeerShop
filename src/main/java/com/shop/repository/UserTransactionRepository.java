@@ -25,11 +25,13 @@ import java.util.TimeZone;
 
 
 public class UserTransactionRepository {
-    private static final String SELECT_TRANSACTION_BY_USERID = "select * from users_transactions where user_id=? limit ?";
+    private static final String SELECT_TRANSACTION_BY_USERID = "select * from users_transactions where user_id=? order by id limit ? offset ?";
+    private static final String SELECT_ALL_TRANSACTIONS = "select * from users_transactions order by id limit ? offset ?";
     public static final Calendar UTC = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
     private static final String SAVE_TRANSACTION =
             "insert into users_transactions (user_id,position_id,quantity,created,quantity_class_type) values (?,?,to_json(?::json),?,?)";
     private static final String POSITION_ID = "position_id";
+    private static final String USER_ID = "user_id";
     private static final String QUANTITY = "quantity";
     private static final String CREATED = "created";
     private static final String QUANTITY_CLASS_TYPE = "quantity_class_type";
@@ -72,7 +74,7 @@ public class UserTransactionRepository {
         }
     }
 
-    public List<UserTransaction> getTransactionsByUserId(Integer userId, Integer validPageSize) {
+    public List<UserTransaction> getTransactionsByUserId(Integer userId, Integer validPageSize, Integer page) {
 
         try {
             List<UserTransaction> transactionList = new ArrayList<>();
@@ -81,6 +83,7 @@ public class UserTransactionRepository {
             PreparedStatement preparedStatement = connection.prepareStatement(SELECT_TRANSACTION_BY_USERID);
             preparedStatement.setInt(1, userId);
             preparedStatement.setInt(2, validPageSize);
+            preparedStatement.setInt(3, validPageSize * (page - 1));
 
             ResultSet rs = preparedStatement.executeQuery();
             while (rs.next()) {
@@ -103,6 +106,33 @@ public class UserTransactionRepository {
             throw new UnableToExecuteQueryException(e.getMessage());
         } catch (IOException e) {
             throw new UnableToPerformSerializationException(e.getMessage());
+        }
+    }
+
+    public List<UserTransaction> getAllTransactions(Integer validPageSize, Integer page) {
+
+        try {
+            List<UserTransaction> transactionList = new ArrayList<>();
+
+            Connection connection = getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_TRANSACTIONS);
+            preparedStatement.setInt(1, validPageSize);
+            preparedStatement.setInt(2, validPageSize * (page - 1));
+
+
+            ResultSet rs = preparedStatement.executeQuery();
+            while (rs.next()) {
+
+                transactionList.add(UserTransaction.builder()
+                        .positionId(rs.getInt(POSITION_ID))
+                        .userId(rs.getInt(USER_ID))
+                        .build());
+
+            }
+            return transactionList;
+
+        } catch (SQLException e) {
+            throw new UnableToExecuteQueryException(e.getMessage());
         }
     }
 }

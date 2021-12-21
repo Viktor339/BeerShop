@@ -24,7 +24,7 @@ public class AddPositionAction implements Action {
     @Override
     public boolean isValid(HttpServletRequest req) {
         String path = req.getRequestURI().substring(req.getContextPath().length());
-        return path.equals("/position")&req.getMethod().equals("POST");
+        return path.equals("/positions")&req.getMethod().equals("POST");
     }
 
     @Override

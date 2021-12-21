@@ -43,13 +43,13 @@ public class AuthFilter implements Filter {
             } else {
 
                 if (session.getAttribute("role").equals("user")) {
-                    if (path.startsWith("/history/user") | path.startsWith("/item")) {
+                    if (path.equals("/history/user") | path.equals("/items") | path.equals("/positions")) {
                         filterChain.doFilter(request, response);
                     }
                 }
 
                 if (session.getAttribute("role").equals("admin")) {
-                    if (path.startsWith("/position")) {
+                    if (path.equals("/positions") | path.equals("/history/users")) {
                         filterChain.doFilter(request, response);
                     }
                 }

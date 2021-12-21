@@ -17,7 +17,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Optional;
 import java.util.TimeZone;
 
@@ -30,6 +32,14 @@ public class PositionRepository {
     private static final String UPDATE_POSITION = "update positions set beer_info=to_json(?::json),modified=? where id=?";
     private static final String UPDATE_POSITION_AFTER_PURCHASE = "update positions set beer_info=to_json(?::json) where name=? and container_type=?";
     private static final String SELECT_POSITION_BY_ID = "select * from positions where id=?";
+    private static final String SELECT_ACTIVE_POSITION =
+            "select * from positions where id not in (\n" +
+                    "    select id\n" +
+                    "    from positions\n" +
+                    "    where beer_info::jsonb @> '{\"quantity\":0}'\n" +
+                    "       or beer_info::jsonb @> '{\"availableLiters\":0.0}'\n)" +
+                    "    order by id\n" +
+                    "limit ? offset ?";
     public static final Calendar UTC = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
     private static final String ID = "id";
     private static final String NAME = "name";
@@ -187,5 +197,30 @@ public class PositionRepository {
             throw new UnableToExecuteQueryException(e.getMessage());
 
         }
+    }
+
+    public List<Position> getPositionByBeerInfo(Integer validatedPageSize, Integer page) {
+
+        List<Position> positionList = new ArrayList<>();
+
+        try {
+
+            Connection connection = getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ACTIVE_POSITION);
+            preparedStatement.setLong(1, validatedPageSize);
+            preparedStatement.setInt(2, validatedPageSize * (page - 1));
+
+            ResultSet rs = preparedStatement.executeQuery();
+
+            while (rs.next()) {
+                positionList.add(Position.builder()
+                        .id(rs.getInt(ID))
+                        .build());
+            }
+        } catch (SQLException e) {
+            throw new UnableToExecuteQueryException(e.getMessage());
+        }
+
+        return positionList;
     }
 }
