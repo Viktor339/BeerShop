@@ -9,9 +9,6 @@ import com.shop.servlet.dto.GetUserHistoryDto;
 import com.shop.servlet.dto.GetUserHistoryResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -24,26 +21,29 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 class GetUserHistoryServiceTest {
 
     private GetUserHistoryService getUserHistoryService;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).withZone(ZoneOffset.UTC);
 
-    @Mock
-    private UserTransactionRepository userTransactionRepository;
-    @Mock
-    private Config config;
-    @Mock
-    private UserRepository userRepository;
-    @Mock
-    private PageService pageService;
+    private final UserTransactionRepository userTransactionRepository = mock(UserTransactionRepository.class);
+    private final Config config = mock(Config.class);
+    private final UserRepository userRepository = mock(UserRepository.class);
+    private final PageService pageService = mock(PageService.class);
     private final Object uuid = 5;
 
     private List<UserTransaction> userTransactionList;
     private GetUserHistoryResponse getUserHistoryResponse;
+
+    private Integer page;
+    private Integer validatedPageSize;
+    private Integer id;
+    private Integer pageSize;
 
 
     @BeforeEach
@@ -61,16 +61,15 @@ class GetUserHistoryServiceTest {
                 .collect(Collectors.toList());
 
         getUserHistoryResponse = new GetUserHistoryResponse(userHistoryDtoList);
+        page = 5;
+        validatedPageSize = 5;
+        id = 4;
+        pageSize = 5;
 
     }
 
     @Test
-    void testGet_PageSize5Page5UUID5_ShouldReturnGetUserHistoryResponse() {
-
-        Integer page = 5;
-        Integer validatedPageSize = 5;
-        Integer id = 4;
-        Integer pageSize = 5;
+    void testGetShouldReturnGetUserHistoryResponse() {
 
         doNothing().when(pageService).validatePage(page);
         when(pageService.getSize(any(), any(), any())).thenReturn(validatedPageSize);
@@ -78,6 +77,11 @@ class GetUserHistoryServiceTest {
         when(userTransactionRepository.getTransactionsByUserId(id, validatedPageSize, page)).thenReturn(userTransactionList);
 
         assertEquals(getUserHistoryResponse, getUserHistoryService.get(pageSize, page, uuid));
+        verify(pageService, times(1)).validatePage(any());
+        verify(pageService, times(1)).getSize(any(), any(), any());
+        verify(userRepository, times(1)).getUserIdByUUID(any());
+        verify(userTransactionRepository, times(1)).getTransactionsByUserId(any(), any(), any());
+
     }
 }
 

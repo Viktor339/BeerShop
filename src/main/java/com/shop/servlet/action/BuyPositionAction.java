@@ -3,7 +3,7 @@ package com.shop.servlet.action;
 import com.shop.service.BuyPositionService;
 import com.shop.service.JSONParseService;
 import com.shop.service.Response;
-import com.shop.service.exception.AvailableQuantityExceeded;
+import com.shop.service.exception.AvailableQuantityExceededException;
 import com.shop.service.exception.PositionNotFoundException;
 import com.shop.service.exception.ValidatorException;
 import com.shop.servlet.dto.InformationResponse;
@@ -41,7 +41,7 @@ public class BuyPositionAction implements Action {
 
         } catch (PositionNotFoundException |
                 ValidatorException |
-                AvailableQuantityExceeded e) {
+                AvailableQuantityExceededException e) {
             response.send(resp, new InformationResponse(e.getMessage()), HttpServletResponse.SC_BAD_REQUEST);
         }
     }

@@ -11,7 +11,7 @@ public class AlcoholPercentageValidator implements Validator<AddPositionRequest>
 
     @Override
     public boolean isValid(AddPositionRequest value) {
-        return value.getAlcoholPercentage() <= minPercentage | value.getAlcoholPercentage() >= maxPercentage;
+        return (value.getAlcoholPercentage() <= minPercentage) | (value.getAlcoholPercentage() >= maxPercentage);
     }
 
     @Override
