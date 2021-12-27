@@ -1,13 +1,15 @@
 package com.shop.service.validator;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
@@ -16,39 +18,29 @@ import static org.mockito.Mockito.when;
 
 class NotEmptyFieldValidatorTest {
 
+    private static final String MESSAGE = "message";
     private final Function<Object, Object> function = (Function<Object, Object>) mock(Function.class);
     private NotEmptyFieldValidator<Object> notEmptyFieldValidator;
-    private final String message = "message";
 
     @BeforeEach
     public void setUp() {
-        notEmptyFieldValidator = new NotEmptyFieldValidator<>(function, message);
+        notEmptyFieldValidator = new NotEmptyFieldValidator<>(function, MESSAGE);
     }
 
-    @Test
-    void testIsValidShouldReturnFalse() {
-        when(function.apply(any())).thenReturn("Apply");
-        assertFalse(notEmptyFieldValidator.isValid("Value"));
+    @ParameterizedTest
+    @MethodSource("argumentsStream")
+    void testIsValid(String result, boolean isValid) {
+        when(function.apply(any())).thenReturn(result);
+        assertEquals(notEmptyFieldValidator.isValid("Value"), isValid);
         verify(function, atLeast(1)).apply(any());
     }
 
-    @Test
-    void testIsValidWhenFieldIsNullShouldReturnTrue() {
-        when(function.apply(any())).thenReturn(null);
-        assertTrue(notEmptyFieldValidator.isValid("Value"));
-        verify(function).apply(any());
-    }
-
-    @Test
-    void testIsValidWhenFieldIsEmptyShouldReturnTrue() {
-        when(function.apply(any())).thenReturn("");
-        assertTrue(notEmptyFieldValidator.isValid("Value"));
-        verify(function, atLeast(1)).apply(any());
-    }
-
-    @Test
-    void testGetMessage() {
-        assertEquals(message, notEmptyFieldValidator.getMessage());
+    static Stream<Arguments> argumentsStream() {
+        return Stream.of(
+                arguments("Apply", false),
+                arguments(null, true),
+                arguments("", true)
+        );
     }
 }
 

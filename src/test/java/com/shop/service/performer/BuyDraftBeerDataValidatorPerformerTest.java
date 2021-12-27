@@ -1,12 +1,11 @@
 package com.shop.service.performer;
 
-import com.shop.model.BuyBottleBeerData;
 import com.shop.model.BuyDraftBeerData;
-import com.shop.service.validator.NotEmptyFieldValidator;
 import com.shop.service.validator.Validator;
 import com.shop.servlet.request.BuyPositionRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,12 +14,14 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 public class BuyDraftBeerDataValidatorPerformerTest {
 
+    private static final String RESULT = "Id is null or empty";
     private BuyDraftBeerDataValidatorPerformer buyBottleBeerDataValidatorPerformer;
-
     private BuyPositionRequest buyPositionRequest;
+    private List<Validator<BuyDraftBeerData>> buyDraftBeerDataValidator;
 
     @BeforeEach
     public void setUp() {
@@ -28,16 +29,16 @@ public class BuyDraftBeerDataValidatorPerformerTest {
         buyPositionRequest = new BuyPositionRequest();
         buyPositionRequest.setDraft(Collections.singletonList(new BuyDraftBeerData(null, 1.0)));
 
-         List<Validator<BuyDraftBeerData>> buyDraftBeerDataValidator=Collections.singletonList(
-                 new NotEmptyFieldValidator<>(BuyDraftBeerData::getId, "Id is null or empty")
-         );
+        buyDraftBeerDataValidator = Collections.singletonList(
+                (Validator<BuyDraftBeerData>) Mockito.mock(Validator.class)
+        );
 
         buyBottleBeerDataValidatorPerformer = new BuyDraftBeerDataValidatorPerformer(buyDraftBeerDataValidator);
     }
 
 
     @Test
-    void testPerformShouldReturnMessage1() {
+    void testIsValid() {
 
         assertTrue(buyBottleBeerDataValidatorPerformer.isValid(buyPositionRequest));
     }
@@ -45,8 +46,9 @@ public class BuyDraftBeerDataValidatorPerformerTest {
     @Test
     void testPerformShouldReturnMessage() {
 
-        String result = "Id is null or empty";
-        assertEquals(result, buyBottleBeerDataValidatorPerformer.perform(buyPositionRequest));
+        when(buyDraftBeerDataValidator.get(0).isValid(buyPositionRequest.getDraft().get(0))).thenReturn(true);
+        when(buyDraftBeerDataValidator.get(0).getMessage()).thenReturn(RESULT);
+        assertEquals(RESULT, buyBottleBeerDataValidatorPerformer.perform(buyPositionRequest));
     }
 
 

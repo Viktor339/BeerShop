@@ -2,12 +2,12 @@ package com.shop.service.performer;
 
 import com.shop.model.DraftBeerData;
 import com.shop.service.ValidatorService;
-import com.shop.service.validator.NotEmptyFieldValidator;
 import com.shop.service.validator.Validator;
 import com.shop.servlet.dto.AddPositionDto;
 import com.shop.servlet.request.AddPositionRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,7 +32,7 @@ public class DraftBeerPerformerTest {
     public void setUp() {
 
         List<Validator<DraftBeerData>> draftBeerDataValidator = Collections.singletonList(
-                new NotEmptyFieldValidator<>(DraftBeerData::getAvailableLiters, "Available litres is null or empty")
+                (Validator<DraftBeerData>) Mockito.mock(Validator.class)
         );
 
         draftBeerPerformer = new DraftBeerPerformer(validatorService, draftBeerDataValidator);

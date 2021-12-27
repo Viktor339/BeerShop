@@ -2,12 +2,12 @@ package com.shop.service.performer;
 
 import com.shop.model.BottleBeerData;
 import com.shop.service.ValidatorService;
-import com.shop.service.validator.NotEmptyFieldValidator;
 import com.shop.service.validator.Validator;
 import com.shop.servlet.dto.AddPositionDto;
 import com.shop.servlet.request.AddPositionRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.Collections;
 import java.util.List;
@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 
 class BottleBeerPerformerTest {
 
+    private static final String BOTTLE = "bottle";
     private final ValidatorService validatorService = mock(ValidatorService.class);
 
     private BottleBeerPerformer bottleBeerPerformer;
@@ -34,7 +35,7 @@ class BottleBeerPerformerTest {
     public void setUp() {
 
         List<Validator<BottleBeerData>> bottleBeerValidator = Collections.singletonList(
-                new NotEmptyFieldValidator<>(BottleBeerData::getContainerVolume, "Container volume is null or empty")
+                (Validator<BottleBeerData>) Mockito.mock(Validator.class)
         );
 
         bottleBeerPerformer = new BottleBeerPerformer(validatorService, bottleBeerValidator);
@@ -54,7 +55,7 @@ class BottleBeerPerformerTest {
 
     @Test
     void testIsValid() {
-        assertTrue(bottleBeerPerformer.isValid("bottle"));
+        assertTrue(bottleBeerPerformer.isValid(BOTTLE));
     }
 
     @Test

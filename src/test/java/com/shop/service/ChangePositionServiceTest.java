@@ -1,16 +1,14 @@
 package com.shop.service;
 
-import com.shop.config.Config;
 import com.shop.model.BottleBeerData;
 import com.shop.repository.PositionRepository;
 import com.shop.service.exception.PositionNotFoundException;
-import com.shop.service.validator.Validator;
 import com.shop.servlet.dto.ChangePositionResponse;
 import com.shop.servlet.request.ChangePositionRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -26,18 +24,16 @@ class ChangePositionServiceTest {
 
     private final PositionRepository positionRepository = mock(PositionRepository.class);
     private final ValidatorService validatorService = mock(ValidatorService.class);
-    private final Config config = mock(Config.class);
 
     private ChangePositionService changePositionService;
     private ChangePositionRequest changePositionRequest;
 
-    private List<Validator<ChangePositionRequest>> changePositionRequestValidator;
     private ChangePositionResponse changePositionResponse;
 
 
     @BeforeEach
     public void setUp() {
-        changePositionService = new ChangePositionService(positionRepository, config, validatorService);
+        changePositionService = new ChangePositionService(positionRepository, validatorService, new ArrayList<>());
 
         changePositionRequest = new ChangePositionRequest();
         changePositionRequest.setId(1L);
@@ -62,7 +58,7 @@ class ChangePositionServiceTest {
     @Test
     void testChangeShouldReturnChangePositionResponse() {
 
-        doNothing().when(validatorService).validate(changePositionRequestValidator, changePositionRequest);
+        doNothing().when(validatorService).validate(new ArrayList<>(), changePositionRequest);
         when(positionRepository.existsPositionById(any())).thenReturn(true);
         doNothing().when(positionRepository).update(any(), any());
 

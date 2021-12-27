@@ -1,20 +1,22 @@
 package com.shop.service;
 
-import com.shop.model.BottleBeerData;
 import com.shop.model.BuyBottleBeerData;
 import com.shop.model.BuyDraftBeerData;
-import com.shop.model.Position;
+import com.shop.model.DraftBuyBeerQuantity;
 import com.shop.repository.PositionRepository;
 import com.shop.repository.UserRepository;
 import com.shop.repository.UserTransactionRepository;
 import com.shop.service.exception.ValidatorException;
+import com.shop.service.performer.Performer;
+import com.shop.servlet.dto.BuyPositionDto;
 import com.shop.servlet.request.BuyPositionRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Optional;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -31,14 +33,36 @@ class BuyPositionServiceTest {
     private BuyPositionService buyPositionService;
     private BuyPositionRequest buyPositionRequest;
     private Object uuid;
+    private List<Performer<BuyPositionRequest, String>> buyBeerDataValidatorPerformer;
+    private List<Performer<BuyPositionRequest, List<BuyPositionDto>>> buyBeerPerformer;
+    List<BuyPositionDto> buyPositionDtoList;
+
 
     @BeforeEach
     public void setUp() {
+
+        buyBeerDataValidatorPerformer = Collections.singletonList(
+                (Performer<BuyPositionRequest, String>) Mockito.mock(Performer.class));
+
+        buyBeerPerformer = Collections.singletonList(
+                (Performer<BuyPositionRequest, List<BuyPositionDto>>) Mockito.mock(Performer.class)
+        );
+
         buyPositionRequest = new BuyPositionRequest();
-        buyPositionService = new BuyPositionService(positionRepository, userTransactionRepository, userRepository);
+        buyPositionService = new BuyPositionService(buyBeerPerformer, positionRepository, userTransactionRepository, userRepository, buyBeerDataValidatorPerformer);
 
         buyPositionRequest.setDraft(Collections.singletonList(new BuyDraftBeerData(null, 1.0)));
         uuid = 1;
+
+
+        buyPositionDtoList = new ArrayList<>();
+
+        BuyPositionDto buyPositionDto = BuyPositionDto.builder()
+                .quantity(new DraftBuyBeerQuantity(1.0))
+                .quantityType("BottleBuyBeerQuantity")
+                .build();
+
+        buyPositionDtoList.add(buyPositionDto);
 
     }
 
@@ -48,9 +72,11 @@ class BuyPositionServiceTest {
         buyPositionRequest.setBottle(Collections.singletonList(new BuyBottleBeerData(null, 1)));
         buyPositionRequest.setDraft(Collections.emptyList());
 
+        when(buyBeerDataValidatorPerformer.get(0).isValid(buyPositionRequest)).thenReturn(true);
+        when(buyBeerDataValidatorPerformer.get(0).perform(buyPositionRequest)).thenReturn("message");
+
         assertThrows(ValidatorException.class, () ->
                 buyPositionService.buy(buyPositionRequest, uuid));
-
     }
 
 
@@ -61,9 +87,8 @@ class BuyPositionServiceTest {
         buyPositionRequest.setDraft(Collections.emptyList());
 
         when(userRepository.getUserIdByUUID(uuid)).thenReturn(1);
-        when(positionRepository.findPositionById(1L, BottleBeerData.class)).thenReturn(Optional.ofNullable(Position.builder()
-                .beerInfo(new BottleBeerData(1.0, 2))
-                .build()));
+        when(buyBeerPerformer.get(0).isValid(buyPositionRequest)).thenReturn(true);
+        when(buyBeerPerformer.get(0).perform(buyPositionRequest)).thenReturn(buyPositionDtoList);
 
         buyPositionService.buy(buyPositionRequest, uuid);
 

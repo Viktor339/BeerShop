@@ -3,37 +3,25 @@ package com.shop.service;
 import com.shop.model.User;
 import com.shop.repository.UserRepository;
 import com.shop.service.exception.UserNotFoundException;
-import com.shop.service.exception.ValidatorException;
-import com.shop.service.validator.NotEmptyFieldValidator;
 import com.shop.service.validator.Validator;
 import com.shop.servlet.request.LoginRequest;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 public class LoginService {
     private final UserRepository userRepository;
     private final List<Validator<LoginRequest>> validators;
+    private final ValidatorService validatorService;
 
-    public LoginService(UserRepository userRepository) {
+    public LoginService(UserRepository userRepository, List<Validator<LoginRequest>> validators, ValidatorService validatorService) {
         this.userRepository = userRepository;
-        validators = Arrays.asList(
-                new NotEmptyFieldValidator<>(LoginRequest::getName, "Name is null"),
-                new NotEmptyFieldValidator<>(LoginRequest::getPassword, "Password is null")
-        );
+        this.validators = validators;
+        this.validatorService = validatorService;
     }
 
     public User login(LoginRequest loginRequest) {
 
-        final Optional<String> invalidMessage = validators.stream()
-                .filter(v -> v.isValid(loginRequest))
-                .findFirst()
-                .map(Validator::getMessage);
-
-        if (invalidMessage.isPresent()) {
-            throw new ValidatorException(invalidMessage.get());
-        }
+        validatorService.validate(validators, loginRequest);
 
         return userRepository.getUserByNameAndPassword(loginRequest.getName(), loginRequest.getPassword())
                 .orElseThrow(() -> new UserNotFoundException("Incorrect username or password"));

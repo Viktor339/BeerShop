@@ -1,11 +1,11 @@
 package com.shop.service;
 
-import com.shop.config.Config;
 import com.shop.model.BottleBeerData;
 import com.shop.model.DraftBeerData;
 import com.shop.repository.PositionRepository;
 import com.shop.service.exception.BeerPositionExecutorNotFoundException;
 import com.shop.service.exception.PositionAlreadyExistsException;
+import com.shop.service.performer.Performer;
 import com.shop.service.validator.Validator;
 import com.shop.servlet.dto.AddPositionDto;
 import com.shop.servlet.dto.AddPositionResponse;
@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,7 +30,8 @@ class AddPositionServiceTest {
 
     private final PositionRepository positionRepository = mock(PositionRepository.class);
     private final ValidatorService validatorService = mock(ValidatorService.class);
-    private final Config config = mock(Config.class);
+    private List<Performer<AddPositionRequest, AddPositionDto>> beerPositionPerformer;
+
 
     private final List<Validator<AddPositionRequest>> positionRequestValidator = new ArrayList<>();
     private AddPositionRequest addPositionRequest;
@@ -41,7 +43,10 @@ class AddPositionServiceTest {
     @BeforeEach
     public void setUp() {
 
-        addPositionService = new AddPositionService(positionRepository, config, validatorService);
+        beerPositionPerformer = Collections.singletonList(
+                (Performer<AddPositionRequest, AddPositionDto>) mock(Performer.class));
+
+        addPositionService = new AddPositionService(positionRepository, validatorService, positionRequestValidator, beerPositionPerformer);
 
         addPositionRequest = new AddPositionRequest();
         addPositionRequest.setName("name");
@@ -67,6 +72,7 @@ class AddPositionServiceTest {
                 .containerType(addPositionDto.getContainerType())
                 .beerInfo(addPositionDto.getBeerInfo())
                 .build();
+
     }
 
 
@@ -100,9 +106,11 @@ class AddPositionServiceTest {
         doNothing().when(validatorService).validate(positionRequestValidator, addPositionRequest);
         when(positionRepository.existsPositionByNameAndContainerType(any(), any())).thenReturn(false);
         when(positionRepository.save(any())).thenReturn(addPositionDto);
+        when(beerPositionPerformer.get(0).isValid(addPositionRequest.getContainerType())).thenReturn(true);
+        when(beerPositionPerformer.get(0).perform(addPositionRequest)).thenReturn(addPositionDto);
 
         assertEquals(addPositionResponse, addPositionService.add(addPositionRequest));
-        verify(validatorService, times(2)).validate(any(), any());
+        verify(validatorService, times(1)).validate(any(), any());
         verify(positionRepository, times(1)).existsPositionByNameAndContainerType(any(), any());
         verify(positionRepository, times(1)).save(any());
 

@@ -5,7 +5,6 @@ import com.shop.model.UserTransaction;
 import com.shop.repository.UserTransactionRepository;
 import com.shop.servlet.dto.GetAllUsersHistoryDto;
 import com.shop.servlet.dto.GetAllUsersHistoryResponse;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -68,7 +67,7 @@ public class GetAllUsersHistoryServiceTest {
 
         assertEquals(getAllUsersHistoryResponse, getAllUsersHistoryService.get(pageSize, page));
         verify(pageService, times(1)).validatePage(any());
-        verify(pageService, times(1)).getSize(any(), any(),any());
+        verify(pageService, times(1)).getSize(any(), any(), any());
         verify(userTransactionRepository, times(1)).getAllTransactions(any(), any());
 
     }

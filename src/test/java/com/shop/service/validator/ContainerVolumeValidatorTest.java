@@ -1,7 +1,6 @@
 package com.shop.service.validator;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -10,8 +9,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.atLeast;
@@ -21,47 +18,32 @@ import static org.mockito.Mockito.when;
 
 class ContainerVolumeValidatorTest {
 
+    private static final String MESSAGE = "message";
     private final Function<Double, Double> function = (Function<Double, Double>) mock(Function.class);
     private ContainerVolumeValidator<Double> containerVolumeValidator;
-    private String message;
 
     @BeforeEach
     public void setUp() {
-        containerVolumeValidator = new ContainerVolumeValidator<>(function, 0.1, 3.0, "message");
+        containerVolumeValidator = new ContainerVolumeValidator<>(function, 0.1, 3.0, MESSAGE);
 
-        message = "message";
     }
 
-
-    @Test
-    void testIsValidWhenTakesValidParameterShouldReturnFalse() {
-
-        when(function.apply(any())).thenReturn(2.0);
-
-        assertFalse((containerVolumeValidator).isValid(any()));
-        verify(function, atLeast(1)).apply(any());
-    }
 
     @ParameterizedTest
-    @MethodSource("invalidContainerVolume")
-    void testIsValidWhenTakesInvalidParameterShouldReturnTrue(double containerVolume) {
+    @MethodSource("argumentsStream")
+    void testIsValid(double containerVolume, boolean isValid) {
 
         when(function.apply(any())).thenReturn(containerVolume);
 
-        assertTrue((containerVolumeValidator).isValid(any()));
+        assertEquals((containerVolumeValidator).isValid(any()), isValid);
         verify(function, atLeast(1)).apply(any());
     }
 
-
-    @Test
-    void testGetMessage() {
-        assertEquals(message, containerVolumeValidator.getMessage());
-    }
-
-    static Stream<Arguments> invalidContainerVolume() {
+    static Stream<Arguments> argumentsStream() {
         return Stream.of(
-                arguments(0.0),
-                arguments(4.0)
+                arguments(0.0, true),
+                arguments(4.0, true),
+                arguments(2.0, false)
         );
     }
 }

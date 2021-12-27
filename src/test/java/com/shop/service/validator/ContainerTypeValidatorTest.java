@@ -1,13 +1,15 @@
 package com.shop.service.validator;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
@@ -16,33 +18,28 @@ import static org.mockito.Mockito.when;
 
 class ContainerTypeValidatorTest {
 
+    private static final String MESSAGE = "message";
     private final Function<Object, Object> function = (Function<Object, Object>) mock(Function.class);
-    private String message;
     private ContainerTypeValidator<Object> containerTypeValidator;
 
     @BeforeEach
     public void setUp() {
-        message = "message";
-        containerTypeValidator = new ContainerTypeValidator<>(function, message);
+        containerTypeValidator = new ContainerTypeValidator<>(function, MESSAGE);
     }
 
-    @Test
-    void testIsValidShouldReturnTrue() {
-        when(function.apply(any())).thenReturn("value");
-        assertTrue((new ContainerTypeValidator<>(function, message)).isValid(any()));
+    @ParameterizedTest
+    @MethodSource("argumentsStream")
+    void testIsValid(String type, boolean isValid) {
+        when(function.apply(any())).thenReturn(type);
+        assertEquals((containerTypeValidator).isValid(any()), isValid);
         verify(function, atLeast(1)).apply(any());
     }
 
-    @Test
-    void testIsValidShouldReturnFalse() {
-        when(function.apply(any())).thenReturn("draft");
-        assertFalse((new ContainerTypeValidator<>(function, message)).isValid(any()));
-        verify(function, atLeast(1)).apply(any());
-    }
-
-    @Test
-    void testGetMessage() {
-        assertEquals(message, containerTypeValidator.getMessage());
+    static Stream<Arguments> argumentsStream() {
+        return Stream.of(
+                arguments("value", true),
+                arguments("draft", false)
+        );
     }
 }
 
