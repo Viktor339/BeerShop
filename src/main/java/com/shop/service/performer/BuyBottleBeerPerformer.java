@@ -5,7 +5,7 @@ import com.shop.model.BottleBuyBeerQuantity;
 import com.shop.model.BuyBottleBeerData;
 import com.shop.model.Position;
 import com.shop.repository.PositionRepository;
-import com.shop.service.exception.AvailableQuantityExceeded;
+import com.shop.service.exception.AvailableQuantityExceededException;
 import com.shop.service.exception.PositionNotFoundException;
 import com.shop.servlet.dto.BuyPositionDto;
 import com.shop.servlet.request.BuyPositionRequest;
@@ -37,7 +37,7 @@ public class BuyBottleBeerPerformer implements Performer<BuyPositionRequest, Lis
             Integer quantity = bottleBeerData.getQuantity();
 
             if (quantity < bottleBeer.getQuantity()) {
-                throw new AvailableQuantityExceeded("The maximum available beer quantity has been exceeded");
+                throw new AvailableQuantityExceededException("The maximum available beer quantity has been exceeded");
             }
 
             bottleBeerData.setQuantity(quantity - bottleBeer.getQuantity());

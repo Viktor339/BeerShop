@@ -1,7 +1,6 @@
 package com.shop.servlet.action;
 
 import com.shop.model.User;
-import com.shop.service.JSONParseService;
 import com.shop.service.LoginService;
 import com.shop.service.Response;
 import com.shop.service.exception.UserNotFoundException;
@@ -9,6 +8,7 @@ import com.shop.service.exception.ValidatorException;
 import com.shop.servlet.dto.InformationResponse;
 import com.shop.servlet.request.LoginRequest;
 import lombok.RequiredArgsConstructor;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -17,7 +17,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class LoginAction implements Action {
     private final LoginService loginService;
-    private final JSONParseService jsonParseService;
+    private final ObjectMapper objectMapper;
     private final Response response;
 
     @Override
@@ -29,7 +29,8 @@ public class LoginAction implements Action {
 
     @Override
     public void doAction(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        LoginRequest loginRequest = jsonParseService.parseFromJson(req.getInputStream(), LoginRequest.class);
+
+        LoginRequest loginRequest = objectMapper.readValue(req.getInputStream(), LoginRequest.class);
 
         try {
             User user = loginService.login(loginRequest);

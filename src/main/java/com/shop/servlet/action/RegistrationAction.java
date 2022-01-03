@@ -1,6 +1,5 @@
 package com.shop.servlet.action;
 
-import com.shop.service.JSONParseService;
 import com.shop.service.RegistrationService;
 import com.shop.service.Response;
 import com.shop.service.exception.UserAlreadyExistsException;
@@ -9,6 +8,7 @@ import com.shop.servlet.dto.InformationResponse;
 import com.shop.servlet.dto.UserRegistrationResponse;
 import com.shop.servlet.request.RegistrationRequest;
 import lombok.RequiredArgsConstructor;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -17,7 +17,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class RegistrationAction implements Action {
     private final RegistrationService registrationService;
-    private final JSONParseService jsonParseService;
+    private final ObjectMapper objectMapper;
     private final Response response;
 
     @Override
@@ -29,7 +29,8 @@ public class RegistrationAction implements Action {
 
     @Override
     public void doAction(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        RegistrationRequest registrationRequest = jsonParseService.parseFromJson(req.getInputStream(), RegistrationRequest.class);
+
+        RegistrationRequest registrationRequest = objectMapper.readValue(req.getInputStream(), RegistrationRequest.class);
 
         try {
             String userUUID = registrationService.register(registrationRequest);
