@@ -8,7 +8,6 @@ import com.shop.servlet.dto.GetAvailablePositionsResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,9 +40,9 @@ public class GetAvailablePositionsServiceTest {
         Position position = Position.builder()
                 .id(1)
                 .build();
-        positionList = Collections.singletonList(position);
+        positionList = List.of(position);
 
-        List<GetAvailablePositionsDto> availablePositionsDtoList = Collections.singletonList(GetAvailablePositionsDto.builder()
+        List<GetAvailablePositionsDto> availablePositionsDtoList = List.of(GetAvailablePositionsDto.builder()
                 .positionId(positionList.get(0).getId())
                 .build());
         getAvailablePositionsResponse = new GetAvailablePositionsResponse(availablePositionsDtoList);

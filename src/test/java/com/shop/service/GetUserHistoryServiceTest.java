@@ -14,7 +14,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,7 +49,7 @@ class GetUserHistoryServiceTest {
     public void setUp() {
         getUserHistoryService = new GetUserHistoryService(userTransactionRepository, config, userRepository, pageService);
 
-        userTransactionList = Collections.singletonList(UserTransaction.builder()
+        userTransactionList = List.of(UserTransaction.builder()
                 .positionId(1)
                 .quantity(new BottleBuyBeerQuantity(1))
                 .created(Instant.now())

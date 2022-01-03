@@ -9,7 +9,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,7 +30,7 @@ public class DraftBeerPerformerTest {
     @BeforeEach
     public void setUp() {
 
-        List<Validator<DraftBeerData>> draftBeerDataValidator = Collections.singletonList(
+        List<Validator<DraftBeerData>> draftBeerDataValidator = List.of(
                 (Validator<DraftBeerData>) Mockito.mock(Validator.class)
         );
 

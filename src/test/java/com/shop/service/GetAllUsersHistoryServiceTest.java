@@ -8,7 +8,6 @@ import com.shop.servlet.dto.GetAllUsersHistoryResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -38,12 +37,12 @@ public class GetAllUsersHistoryServiceTest {
 
         getAllUsersHistoryService = new GetAllUsersHistoryService(userTransactionRepository, config, pageService);
 
-        userTransactionList = Collections.singletonList(UserTransaction.builder()
+        userTransactionList = List.of(UserTransaction.builder()
                 .userId(1)
                 .positionId(1)
                 .build());
 
-        List<GetAllUsersHistoryDto> userHistoryDtoList = Collections.singletonList(GetAllUsersHistoryDto.builder()
+        List<GetAllUsersHistoryDto> userHistoryDtoList = List.of(GetAllUsersHistoryDto.builder()
                 .userId(userTransactionList.get(0).getUserId())
                 .positionId(userTransactionList.get(0).getPositionId())
                 .build());

@@ -14,7 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,7 +42,7 @@ class AddPositionServiceTest {
     @BeforeEach
     public void setUp() {
 
-        beerPositionPerformer = Collections.singletonList(
+        beerPositionPerformer = List.of(
                 (Performer<AddPositionRequest, AddPositionDto>) mock(Performer.class));
 
         addPositionService = new AddPositionService(positionRepository, validatorService, positionRequestValidator, beerPositionPerformer);

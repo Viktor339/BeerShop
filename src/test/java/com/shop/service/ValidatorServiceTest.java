@@ -7,7 +7,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -25,7 +24,7 @@ class ValidatorServiceTest {
     @BeforeEach
     public void setUp() {
         validatorService = new ValidatorService();
-        positionRequestValidator = Collections.singletonList(
+        positionRequestValidator = List.of(
                 (Validator<AddPositionRequest>) mock(Validator.class)
         );
         addPositionRequest = new AddPositionRequest();

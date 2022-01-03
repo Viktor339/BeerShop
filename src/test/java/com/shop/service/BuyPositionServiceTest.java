@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -41,17 +40,17 @@ class BuyPositionServiceTest {
     @BeforeEach
     public void setUp() {
 
-        buyBeerDataValidatorPerformer = Collections.singletonList(
+        buyBeerDataValidatorPerformer = List.of(
                 (Performer<BuyPositionRequest, String>) Mockito.mock(Performer.class));
 
-        buyBeerPerformer = Collections.singletonList(
+        buyBeerPerformer = List.of(
                 (Performer<BuyPositionRequest, List<BuyPositionDto>>) Mockito.mock(Performer.class)
         );
 
         buyPositionRequest = new BuyPositionRequest();
         buyPositionService = new BuyPositionService(buyBeerPerformer, positionRepository, userTransactionRepository, userRepository, buyBeerDataValidatorPerformer);
 
-        buyPositionRequest.setDraft(Collections.singletonList(new BuyDraftBeerData(null, 1.0)));
+        buyPositionRequest.setDraft(List.of(new BuyDraftBeerData(null, 1.0)));
         uuid = 1;
 
 
@@ -69,8 +68,8 @@ class BuyPositionServiceTest {
     @Test
     void testBuyShouldThrowValidatorException() {
 
-        buyPositionRequest.setBottle(Collections.singletonList(new BuyBottleBeerData(null, 1)));
-        buyPositionRequest.setDraft(Collections.emptyList());
+        buyPositionRequest.setBottle(List.of(new BuyBottleBeerData(null, 1)));
+        buyPositionRequest.setDraft(List.of());
 
         when(buyBeerDataValidatorPerformer.get(0).isValid(buyPositionRequest)).thenReturn(true);
         when(buyBeerDataValidatorPerformer.get(0).perform(buyPositionRequest)).thenReturn("message");
@@ -83,8 +82,8 @@ class BuyPositionServiceTest {
     @Test
     void testBuy() {
 
-        buyPositionRequest.setBottle(Collections.singletonList(new BuyBottleBeerData(1L, 1)));
-        buyPositionRequest.setDraft(Collections.emptyList());
+        buyPositionRequest.setBottle(List.of(new BuyBottleBeerData(1L, 1)));
+        buyPositionRequest.setDraft(List.of());
 
         when(userRepository.getUserIdByUUID(uuid)).thenReturn(1);
         when(buyBeerPerformer.get(0).isValid(buyPositionRequest)).thenReturn(true);

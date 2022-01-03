@@ -44,7 +44,6 @@ public class BuyDraftBeerPerformer implements Performer<BuyPositionRequest, List
             position.setBeerInfo(draftBeerData);
 
             BuyPositionDto buyPositionDto = BuyPositionDto.builder()
-                    //  .userId(id)
                     .position(position)
                     .quantity(new DraftBuyBeerQuantity((draftBeer.getQuantity())))
                     .quantityType("DraftBuyBeerQuantity")

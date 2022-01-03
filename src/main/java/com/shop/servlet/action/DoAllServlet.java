@@ -50,8 +50,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class DoAllServlet extends HttpServlet {
@@ -65,7 +63,6 @@ public class DoAllServlet extends HttpServlet {
         super.init();
         ObjectMapper objectMapper = new ObjectMapper();
         UserRepository userRepository = new UserRepository();
-        //     JSONParseService jsonParseService = new JSONParseService(objectMapper);
         Config config = new Config();
         PositionRepository positionRepository = new PositionRepository(objectMapper, config);
         ValidatorService validatorService = new ValidatorService();
@@ -73,9 +70,9 @@ public class DoAllServlet extends HttpServlet {
         PageService pageService = new PageService();
 
         response = new Response(objectMapper);
-        postActions = Arrays.asList(
+        postActions = List.of(
                 new RegistrationAction(new RegistrationService(userRepository,
-                        Arrays.asList(
+                        List.of(
                                 new NotEmptyFieldValidator<>(RegistrationRequest::getPassword, "Password is null or empty"),
                                 new NotEmptyFieldValidator<>(RegistrationRequest::getEmail, "Email is null or empty"),
                                 new NotEmptyFieldValidator<>(RegistrationRequest::getName, "Name is null or empty"),
@@ -85,14 +82,14 @@ public class DoAllServlet extends HttpServlet {
                         objectMapper,
                         response),
                 new LoginAction(new LoginService(userRepository,
-                        Arrays.asList(
+                        List.of(
                                 new NotEmptyFieldValidator<>(LoginRequest::getName, "Name is null or empty"),
                                 new NotEmptyFieldValidator<>(LoginRequest::getPassword, "Password is null or empty")
                         ), validatorService),
                         objectMapper,
                         response),
                 new AddPositionAction(new AddPositionService(positionRepository, validatorService,
-                        Arrays.asList(
+                        List.of(
                                 new NotEmptyFieldValidator<>(AddPositionRequest::getName, "Name is null or empty"),
                                 new NotEmptyFieldValidator<>(AddPositionRequest::getContainerType, "Container type is null or empty"),
                                 new NotEmptyFieldValidator<>(AddPositionRequest::getBeerType, "Beer type is null or empty"),
@@ -102,13 +99,13 @@ public class DoAllServlet extends HttpServlet {
                                 new AlcoholPercentageValidator(config.getMinAlcoholPercentage(), config.getMaxAlcoholPercentage(), "Incorrect alcohol percentage"),
                                 new BitternessValidator(config.getMinBitterness(), config.getMAxBitterness(), "Incorrect bitterness value")
                         ),
-                        Arrays.asList(
+                        List.of(
                                 new DraftBeerPerformer(validatorService,
-                                        Collections.singletonList(
+                                        List.of(
                                                 new NotEmptyFieldValidator<>(DraftBeerData::getAvailableLiters, "Available litres is null or empty")
                                         )),
                                 new BottleBeerPerformer(validatorService,
-                                        Arrays.asList(
+                                        List.of(
                                                 new NotEmptyFieldValidator<>(BottleBeerData::getContainerVolume, "Container volume is null or empty"),
                                                 new NotEmptyFieldValidator<>(BottleBeerData::getQuantity, "Quantity is null or empty"),
                                                 new ContainerVolumeValidator<>(BottleBeerData::getContainerVolume, config.getMinContainerVolume(), config.getMaxContainerVolume(), "Incorrect container volume")
@@ -118,19 +115,19 @@ public class DoAllServlet extends HttpServlet {
                         objectMapper,
                         response),
                 new BuyPositionAction(new BuyPositionService(
-                        Arrays.asList(
+                        List.of(
                                 new BuyBottleBeerPerformer(positionRepository),
                                 new BuyDraftBeerPerformer(positionRepository)
                         ),
                         positionRepository,
                         userTransactionRepository,
                         userRepository,
-                        Arrays.asList(
-                                new BuyDraftBeerDataValidatorPerformer(Arrays.asList(
+                        List.of(
+                                new BuyDraftBeerDataValidatorPerformer(List.of(
                                         new NotEmptyFieldValidator<>(BuyDraftBeerData::getId, "Id is null or empty"),
                                         new NotEmptyFieldValidator<>(BuyDraftBeerData::getQuantity, "Quantity is null or empty")
                                 )),
-                                new BuyBottleBeerDataValidatorPerformer(Arrays.asList(
+                                new BuyBottleBeerDataValidatorPerformer(List.of(
                                         new NotEmptyFieldValidator<>(BuyBottleBeerData::getId, "Id is null or empty"),
                                         new NotEmptyFieldValidator<>(BuyBottleBeerData::getQuantity, "Quantity is null or empty")
                                 ))
@@ -139,10 +136,10 @@ public class DoAllServlet extends HttpServlet {
                         response)
         );
 
-        putActions = Collections.singletonList(
+        putActions = List.of(
                 new ChangePositionAction(new ChangePositionService(positionRepository,
                         validatorService,
-                        Arrays.asList(
+                        List.of(
                                 new NotEmptyFieldValidator<>(ChangePositionRequest::getId, "Id is null or empty"),
                                 new NotEmptyFieldValidator<>(ChangePositionRequest::getContainerVolume, "Container volume is null or empty"),
                                 new NotEmptyFieldValidator<>(ChangePositionRequest::getQuantity, "Quantity is null or empty"),
@@ -152,7 +149,7 @@ public class DoAllServlet extends HttpServlet {
                         response)
         );
 
-        getActions = Arrays.asList(
+        getActions = List.of(
                 new GetUserHistoryAction(new GetUserHistoryService(userTransactionRepository, config, userRepository, pageService), response),
                 new GetAllUsersHistoryAction(new GetAllUsersHistoryService(userTransactionRepository, config, pageService), response),
                 new GetAvailablePositionsAction(new GetAvailablePositionsService(positionRepository, config, pageService), response)

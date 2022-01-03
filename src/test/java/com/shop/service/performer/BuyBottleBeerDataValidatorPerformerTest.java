@@ -5,18 +5,14 @@ import com.shop.service.validator.Validator;
 import com.shop.servlet.request.BuyPositionRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.when;
 
 class BuyBottleBeerDataValidatorPerformerTest {
@@ -31,9 +27,9 @@ class BuyBottleBeerDataValidatorPerformerTest {
     public void setUp() {
 
         buyPositionRequest = new BuyPositionRequest();
-        buyPositionRequest.setBottle(Collections.singletonList(new BuyBottleBeerData(null, 1)));
+        buyPositionRequest.setBottle(List.of(new BuyBottleBeerData(null, 1)));
 
-        buyBottleBeerDataValidator = Collections.singletonList(
+        buyBottleBeerDataValidator = List.of(
                 (Validator<BuyBottleBeerData>) Mockito.mock(Validator.class)
         );
 

@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,9 +26,9 @@ public class BuyDraftBeerDataValidatorPerformerTest {
     public void setUp() {
 
         buyPositionRequest = new BuyPositionRequest();
-        buyPositionRequest.setDraft(Collections.singletonList(new BuyDraftBeerData(null, 1.0)));
+        buyPositionRequest.setDraft(List.of(new BuyDraftBeerData(null, 1.0)));
 
-        buyDraftBeerDataValidator = Collections.singletonList(
+        buyDraftBeerDataValidator = List.of(
                 (Validator<BuyDraftBeerData>) Mockito.mock(Validator.class)
         );
 

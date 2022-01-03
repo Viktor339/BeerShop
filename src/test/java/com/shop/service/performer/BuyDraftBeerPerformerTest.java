@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,7 +43,7 @@ public class BuyDraftBeerPerformerTest {
                 .beerInfo(new DraftBeerData(0.0))
                 .build();
 
-        buyPositionRequest.setDraft(Collections.singletonList(new BuyDraftBeerData(1L, 0.0)));
+        buyPositionRequest.setDraft(List.of(new BuyDraftBeerData(1L, 0.0)));
 
         BuyPositionDto buyPositionDto = BuyPositionDto.builder()
                 .position(position)
@@ -65,7 +64,7 @@ public class BuyDraftBeerPerformerTest {
 
     @Test
     void testPerformShouldThrowPositionNotFoundException() {
-        buyPositionRequest.setBottle(Collections.singletonList(new BuyBottleBeerData(1L, 1)));
+        buyPositionRequest.setBottle(List.of(new BuyBottleBeerData(1L, 1)));
 
         when(positionRepository.findPositionById(1L, BottleBeerData.class)).thenReturn(Optional.empty());
 
@@ -75,9 +74,9 @@ public class BuyDraftBeerPerformerTest {
 
     @Test
     void testPerformShouldThrowAvailableQuantityExceededException() {
-        buyPositionRequest.setDraft(Collections.singletonList(new BuyDraftBeerData(1L, 1.0)));
+        buyPositionRequest.setDraft(List.of(new BuyDraftBeerData(1L, 1.0)));
 
-        when(positionRepository.findPositionById(1L, DraftBeerData.class)).thenReturn(Optional.ofNullable(
+        when(positionRepository.findPositionById(1L, DraftBeerData.class)).thenReturn(Optional.of(
                 position
         ));
 
