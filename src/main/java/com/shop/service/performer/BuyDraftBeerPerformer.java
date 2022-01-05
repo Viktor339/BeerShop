@@ -8,6 +8,7 @@ import com.shop.repository.PositionRepository;
 import com.shop.service.exception.AvailableQuantityExceededException;
 import com.shop.service.exception.PositionNotFoundException;
 import com.shop.servlet.dto.BuyPositionDto;
+import com.shop.servlet.dto.PositionDto;
 import com.shop.servlet.request.BuyPositionRequest;
 import lombok.RequiredArgsConstructor;
 
@@ -30,10 +31,10 @@ public class BuyDraftBeerPerformer implements Performer<BuyPositionRequest, List
 
         for (BuyDraftBeerData draftBeer : value.getDraft()) {
 
-            Position position = positionRepository.findPositionById(draftBeer.getId(), DraftBeerData.class)
+            PositionDto positionDto = positionRepository.findPositionById(draftBeer.getId(), DraftBeerData.class)
                     .orElseThrow(() -> new PositionNotFoundException("Position not found"));
 
-            DraftBeerData draftBeerData = (DraftBeerData) position.getBeerInfo();
+            DraftBeerData draftBeerData = (DraftBeerData) positionDto.getBeerInfo();
             Double quantity = draftBeerData.getAvailableLiters();
 
             if (quantity < draftBeer.getQuantity()) {
@@ -41,10 +42,10 @@ public class BuyDraftBeerPerformer implements Performer<BuyPositionRequest, List
             }
 
             draftBeerData.setAvailableLiters(quantity - draftBeer.getQuantity());
-            position.setBeerInfo(draftBeerData);
+            positionDto.setBeerInfo(draftBeerData);
 
             BuyPositionDto buyPositionDto = BuyPositionDto.builder()
-                    .position(position)
+                    .positionDto(positionDto)
                     .quantity(new DraftBuyBeerQuantity((draftBeer.getQuantity())))
                     .quantityType("DraftBuyBeerQuantity")
                     .build();

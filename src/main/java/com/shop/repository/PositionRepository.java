@@ -2,13 +2,19 @@ package com.shop.repository;
 
 import com.shop.config.Config;
 import com.shop.model.BeerInfo;
+import com.shop.model.BottleBeerData;
 import com.shop.model.Position;
 import com.shop.service.exception.UnableToExecuteQueryException;
 import com.shop.service.exception.UnableToGetConnectionException;
 import com.shop.service.exception.UnableToPerformSerializationException;
 import com.shop.servlet.dto.AddPositionDto;
+import com.shop.servlet.dto.PositionDto;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
 
+import javax.persistence.EntityManager;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -84,25 +90,26 @@ public class PositionRepository {
     public AddPositionDto save(AddPositionDto addPositionDto) {
 
         try {
-            String json = objectMapper.writeValueAsString(addPositionDto.getBeerInfo());
 
-            Connection connection = getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(SAVE_POSITION, Statement.RETURN_GENERATED_KEYS);
-            preparedStatement.setString(1, addPositionDto.getName());
-            preparedStatement.setString(2, addPositionDto.getBeerType());
-            preparedStatement.setDouble(3, addPositionDto.getAlcoholPercentage());
-            preparedStatement.setInt(4, addPositionDto.getBitterness());
-            preparedStatement.setString(5, addPositionDto.getContainerType());
-            Instant eventOccurred = Instant.now();
-            preparedStatement.setTimestamp(6, Timestamp.from(eventOccurred), UTC);
-            preparedStatement.setTimestamp(7, Timestamp.from(eventOccurred), UTC);
-            preparedStatement.setString(8, json);
+            Configuration configuration = new Configuration();
+            configuration.configure();
 
-            preparedStatement.executeUpdate();
-            ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
-            if (generatedKeys.next()) {
-                addPositionDto.setId(generatedKeys.getLong(1));
-            }
+            SessionFactory sessionFactory = configuration.buildSessionFactory();
+            Session session = sessionFactory.openSession();
+
+            session.beginTransaction();
+
+            Position position = Position.builder()
+                    .name(addPositionDto.getName())
+                    .beerType(addPositionDto.getBeerType())
+                    .alcoholPercentage(addPositionDto.getAlcoholPercentage())
+                    .bitterness(addPositionDto.getBitterness())
+                    .containerType(addPositionDto.getContainerType())
+                    .beerInfo(addPositionDto.getBeerInfo())
+                    .build();
+
+            session.save(position);
+            session.getTransaction().commit();
 
             return addPositionDto;
         } catch (Exception e) {
@@ -131,8 +138,8 @@ public class PositionRepository {
     }
 
 
-    public <T> Optional<Position> findPositionById(Long id, Class<T> clazz) {
-        Position position = null;
+    public <T> Optional<PositionDto> findPositionById(Long id, Class<T> clazz) {
+        PositionDto positionDto = null;
 
         try {
 
@@ -143,7 +150,7 @@ public class PositionRepository {
             ResultSet rs = preparedStatement.executeQuery();
 
             while (rs.next()) {
-                position = Position.builder()
+                positionDto = PositionDto.builder()
                         .id(rs.getInt(ID))
                         .name(rs.getString(NAME))
                         .beerType(rs.getString(BEER_TYPE))
@@ -159,21 +166,21 @@ public class PositionRepository {
         } catch (IOException e) {
             throw new UnableToPerformSerializationException(e.getMessage());
         }
-        return Optional.ofNullable(position);
+        return Optional.ofNullable(positionDto);
     }
 
 
-    public void updatePositionAfterPurchase(Position position) {
+    public void updatePositionAfterPurchase(PositionDto positionDto) {
 
 
         try {
-            String json = objectMapper.writeValueAsString(position.getBeerInfo());
+            String json = objectMapper.writeValueAsString(positionDto.getBeerInfo());
 
             Connection connection = getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_POSITION_AFTER_PURCHASE);
             preparedStatement.setString(1, json);
-            preparedStatement.setString(2, position.getName());
-            preparedStatement.setString(3, position.getContainerType());
+            preparedStatement.setString(2, positionDto.getName());
+            preparedStatement.setString(3, positionDto.getContainerType());
 
             preparedStatement.executeUpdate();
 
@@ -184,19 +191,23 @@ public class PositionRepository {
 
     public boolean existsPositionByNameAndContainerType(String name, String containerType) {
 
-        try {
-            Connection connection = getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(GET_POSITION_BY_NAME_AND_CONTAINER_TYPE);
-            preparedStatement.setString(1, name);
-            preparedStatement.setString(2, containerType);
+        Configuration configuration = new Configuration();
+        configuration.configure();
 
-            ResultSet rs = preparedStatement.executeQuery();
+        SessionFactory sessionFactory = configuration.buildSessionFactory();
+        Session session = sessionFactory.openSession();
 
-            return rs.next();
-        } catch (SQLException e) {
-            throw new UnableToExecuteQueryException(e.getMessage());
+        session.beginTransaction();
 
-        }
+        String sql = "select * from positions where name =? and container_type= ?";
+        List<Position> positionList = session.createNativeQuery(sql, Position.class)
+                .setParameter(1, name)
+                .setParameter(2, containerType)
+                .list();
+
+        session.getTransaction().commit();
+
+        return !positionList.isEmpty();
     }
 
     public List<Position> getPositionByBeerInfo(Integer validatedPageSize, Integer page) {

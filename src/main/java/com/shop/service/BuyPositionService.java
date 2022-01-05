@@ -54,7 +54,7 @@ public class BuyPositionService {
                 .map(n -> n.perform(buyPositionRequest))
                 .flatMap(Collection::stream)
                 .forEach(dto -> {
-                    positionRepository.updatePositionAfterPurchase(dto.getPosition());
+                    positionRepository.updatePositionAfterPurchase(dto.getPositionDto());
                     dto.setUserId(id);
                     userTransactionRepository.save(dto);
                 });

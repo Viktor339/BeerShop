@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 public class BuyPositionDto {
-    private Position position;
+    private PositionDto positionDto;
     private Integer userId;
     private Object quantity;
     private String quantityType;

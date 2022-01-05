@@ -60,7 +60,7 @@ public class UserTransactionRepository {
             Connection connection = getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement(SAVE_TRANSACTION);
             preparedStatement.setObject(1, buyPositionDto.getUserId());
-            preparedStatement.setInt(2, buyPositionDto.getPosition().getId());
+            preparedStatement.setInt(2, buyPositionDto.getPositionDto().getId());
             preparedStatement.setString(3, json);
 
             Instant eventOccurred = Instant.now();
