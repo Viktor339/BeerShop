@@ -1,6 +1,6 @@
 package com.shop.service.performer;
 
-import com.shop.model.BottleBeerData;
+import com.shop.model.BeerInfo;
 import com.shop.service.ValidatorService;
 import com.shop.service.validator.Validator;
 import com.shop.servlet.dto.AddPositionDto;
@@ -33,21 +33,21 @@ class BottleBeerPerformerTest {
     @BeforeEach
     public void setUp() {
 
-        List<Validator<BottleBeerData>> bottleBeerValidator = List.of(
-                (Validator<BottleBeerData>) Mockito.mock(Validator.class)
+        List<Validator<BeerInfo>> bottleBeerValidator = List.of(
+                (Validator<BeerInfo>) Mockito.mock(Validator.class)
         );
 
         bottleBeerPerformer = new BottleBeerPerformer(validatorService, bottleBeerValidator);
 
         addPositionRequest = new AddPositionRequest();
         addPositionRequest.setName("name");
-        addPositionRequest.setBeerInfo(new BottleBeerData(1.0, 1));
+        addPositionRequest.setBeerInfo(new BeerInfo(1.0, 1));
 
-        BottleBeerData bottleBeerData = (BottleBeerData) addPositionRequest.getBeerInfo();
+        BeerInfo bottleBeerData = addPositionRequest.getBeerInfo();
 
         addPositionDto = AddPositionDto.builder()
                 .name(addPositionRequest.getName())
-                .beerInfo(new BottleBeerData(bottleBeerData.getContainerVolume(), bottleBeerData.getQuantity()))
+                .beerInfo(new BeerInfo(bottleBeerData.getContainerVolume(), bottleBeerData.getQuantity()))
                 .build();
     }
 

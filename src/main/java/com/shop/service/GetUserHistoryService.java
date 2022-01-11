@@ -2,6 +2,7 @@ package com.shop.service;
 
 import com.shop.config.Config;
 import com.shop.model.UserTransaction;
+import com.shop.repository.TransactionalHandler;
 import com.shop.repository.UserRepository;
 import com.shop.repository.UserTransactionRepository;
 import com.shop.servlet.dto.GetUserHistoryDto;
@@ -11,6 +12,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class GetUserHistoryService {
@@ -19,17 +21,21 @@ public class GetUserHistoryService {
     private final UserRepository userRepository;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).withZone(ZoneOffset.UTC);
     private final PageService pageService;
+    private final TransactionalHandler transactionalHandler;
 
 
-    public GetUserHistoryService(UserTransactionRepository userTransactionRepository, Config config, UserRepository userRepository, PageService pageService) {
+    public GetUserHistoryService(UserTransactionRepository userTransactionRepository, Config config, UserRepository userRepository,
+                                 PageService pageService,
+                                 TransactionalHandler transactionalHandler) {
         this.userTransactionRepository = userTransactionRepository;
         this.config = config;
         this.userRepository = userRepository;
         this.pageService = pageService;
+        this.transactionalHandler = transactionalHandler;
     }
 
 
-    public GetUserHistoryResponse get(Integer pageSize,Integer page, Object uuid) {
+    public GetUserHistoryResponse get(Integer pageSize, Integer page, Object uuid) {
 
         pageService.validatePage(page);
 
@@ -37,14 +43,19 @@ public class GetUserHistoryService {
                 config.getMinUserHistoryPurchasePageSize(),
                 config.getMaxUserHistoryPurchasePageSize());
 
-        Integer id = userRepository.getUserIdByUUID(uuid);
+        AtomicReference<List<GetUserHistoryDto>> userHistoryDtoList = new AtomicReference<>();
 
-        List<UserTransaction> userTransactionList = userTransactionRepository.getTransactionsByUserId(id, validatedPageSize,page);
+        transactionalHandler.doTransaction(session -> {
 
-        List<GetUserHistoryDto> userHistoryDtoList = userTransactionList.stream()
-                .map(n -> new GetUserHistoryDto(n.getPositionId(), n.getQuantity(), formatter.format(n.getCreated())))
-                .collect(Collectors.toList());
+            Integer id = userRepository.getUserIdByUUID(uuid, session);
+            List<UserTransaction> userTransactionList = userTransactionRepository.getTransactionsByUserId(id, validatedPageSize, page, session);
 
-        return new GetUserHistoryResponse(userHistoryDtoList);
+            userHistoryDtoList.set(userTransactionList.stream()
+                    .map(n -> new GetUserHistoryDto(n.getPosition().getId(),
+                            n.getQuantity(), formatter.format(n.getCreated())))
+                    .collect(Collectors.toList()));
+        });
+
+        return new GetUserHistoryResponse(userHistoryDtoList.get());
     }
 }

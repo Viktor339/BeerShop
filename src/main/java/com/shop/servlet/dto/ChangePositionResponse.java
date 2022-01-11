@@ -1,6 +1,6 @@
 package com.shop.servlet.dto;
 
-import com.shop.model.BeerInfo;
+import com.shop.model.BottleBeerData;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,5 +12,5 @@ import lombok.RequiredArgsConstructor;
 @Builder(toBuilder = true)
 public class ChangePositionResponse {
     private long id;
-    private BeerInfo beerInfo;
+    private BottleBeerData beerInfo;
 }

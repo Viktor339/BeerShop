@@ -1,5 +1,6 @@
 package com.shop.service;
 
+import com.shop.repository.TransactionalHandler;
 import com.shop.repository.UserRepository;
 import com.shop.service.exception.UserAlreadyExistsException;
 import com.shop.servlet.request.RegistrationRequest;
@@ -11,7 +12,6 @@ import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -25,11 +25,12 @@ class RegistrationServiceTest {
     private RegistrationRequest registrationRequest;
     private RegistrationService registrationService;
     private String uuid;
+    private final TransactionalHandler transactionalHandler = new TransactionalHandler();
 
     @BeforeEach
     public void setUp() {
         registrationRequest = new RegistrationRequest();
-        registrationService = new RegistrationService(userRepository, new ArrayList<>(), validatorService);
+        registrationService = new RegistrationService(userRepository, new ArrayList<>(), validatorService, transactionalHandler);
         uuid = DigestUtils.md5Hex("t");
 
         registrationRequest.setPassword("t");
@@ -42,21 +43,26 @@ class RegistrationServiceTest {
     @Test
     void testRegisterShouldThrowUserAlreadyExistsException() {
 
-        when(userRepository.existsUserByNameOrEmail(registrationRequest.getName(), registrationRequest.getEmail())).thenReturn(true);
-
         assertThrows(UserAlreadyExistsException.class,
-                () -> registrationService.register(registrationRequest));
+                () -> transactionalHandler.doTransaction(session -> {
+
+                    when(userRepository.existsUserByNameOrEmail(registrationRequest.getName(), registrationRequest.getEmail(), session)).thenReturn(true);
+                    registrationService.register(registrationRequest);
+                }));
     }
 
     @Test
     void testRegister() {
 
-        when(userRepository.existsUserByNameOrEmail(registrationRequest.getName(), registrationRequest.getEmail())).thenReturn(false);
+        transactionalHandler.doTransaction(session -> {
 
-        assertEquals(uuid, registrationService.register(registrationRequest));
-        verify(userRepository, times(1)).existsUserByNameOrEmail(any(), any());
-        verify(userRepository, times(1)).saveUser(any(), any(), any(), any(), any());
+            when(userRepository.existsUserByNameOrEmail(registrationRequest.getName(), registrationRequest.getEmail(), session)).thenReturn(false);
 
+            assertEquals(uuid, registrationService.register(registrationRequest));
+            verify(userRepository, times(1)).existsUserByNameOrEmail("t", "t@gmail.com", session);
+
+            transactionalHandler.beginTransaction();
+        });
     }
 }
 

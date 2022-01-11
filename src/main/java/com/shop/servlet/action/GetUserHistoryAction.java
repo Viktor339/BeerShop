@@ -7,6 +7,8 @@ import com.shop.service.exception.ValidatorException;
 import com.shop.servlet.dto.GetUserHistoryResponse;
 import com.shop.servlet.dto.InformationResponse;
 import lombok.RequiredArgsConstructor;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -15,6 +17,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class GetUserHistoryAction implements Action {
     private final GetUserHistoryService getUserHistoryService;
+    private final ObjectMapper objectMapper;
     private final Response response;
 
     @Override
@@ -34,6 +37,7 @@ public class GetUserHistoryAction implements Action {
                 Integer page = Integer.parseInt(req.getParameter("page"));
 
                 GetUserHistoryResponse getUserHistoryResponse = getUserHistoryService.get(size, page, uuid);
+                objectMapper.setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
                 response.send(resp, getUserHistoryResponse, HttpServletResponse.SC_OK);
 
             } catch (NumberFormatException e) {

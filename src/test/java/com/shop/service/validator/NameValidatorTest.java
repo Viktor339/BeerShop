@@ -31,8 +31,8 @@ class NameValidatorTest {
 
     static Stream<Arguments> argumentsStream() {
         return Stream.of(
-                arguments(".", true),
-                arguments("U", false)
+                arguments(".", false),
+                arguments("U", true)
         );
     }
 }

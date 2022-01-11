@@ -2,11 +2,13 @@ package com.shop.service;
 
 import com.shop.config.Config;
 import com.shop.model.UserTransaction;
+import com.shop.repository.TransactionalHandler;
 import com.shop.repository.UserTransactionRepository;
 import com.shop.servlet.dto.GetAllUsersHistoryDto;
 import com.shop.servlet.dto.GetAllUsersHistoryResponse;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class GetAllUsersHistoryService {
@@ -14,12 +16,14 @@ public class GetAllUsersHistoryService {
     private final UserTransactionRepository userTransactionRepository;
     private final Config config;
     private final PageService pageService;
+    private final TransactionalHandler transactionalHandler;
 
 
-    public GetAllUsersHistoryService(UserTransactionRepository userTransactionRepository, Config config, PageService pageService) {
+    public GetAllUsersHistoryService(UserTransactionRepository userTransactionRepository, Config config, PageService pageService,TransactionalHandler transactionalHandler) {
         this.userTransactionRepository = userTransactionRepository;
         this.config = config;
         this.pageService = pageService;
+        this.transactionalHandler = transactionalHandler;
     }
 
     public GetAllUsersHistoryResponse get(Integer pageSize, Integer page) {
@@ -30,13 +34,20 @@ public class GetAllUsersHistoryService {
                 config.getMinUsersHistoryPurchasePageSize(),
                 config.getMaxUsersHistoryPurchasePageSize());
 
-        List<UserTransaction> userTransactionList = userTransactionRepository.getAllTransactions(validPageSize, page);
+        AtomicReference<List<GetAllUsersHistoryDto>> userHistoryDtoList = new AtomicReference<>();
+        transactionalHandler.doTransaction(session -> {
 
-        List<GetAllUsersHistoryDto> userHistoryDtoList = userTransactionList.stream()
-                .map(n -> new GetAllUsersHistoryDto(n.getUserId(), n.getPositionId()))
-                .collect(Collectors.toList());
+            List<UserTransaction> userTransactionList = userTransactionRepository.getAllTransactions(validPageSize, page,session);
 
-        return new GetAllUsersHistoryResponse(userHistoryDtoList);
+             userHistoryDtoList.set(userTransactionList.stream()
+                     .map(n -> new GetAllUsersHistoryDto(n.getUser().getId(), n.getPosition().getId()))
+                     .collect(Collectors.toList()));
+
+        });
+
+
+
+        return new GetAllUsersHistoryResponse(userHistoryDtoList.get());
     }
 
 }

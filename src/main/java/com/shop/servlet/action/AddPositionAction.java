@@ -10,6 +10,7 @@ import com.shop.servlet.dto.InformationResponse;
 import com.shop.servlet.request.AddPositionRequest;
 import lombok.RequiredArgsConstructor;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -34,6 +35,7 @@ public class AddPositionAction implements Action {
 
         try {
             AddPositionResponse addPositionResponse = addPositionService.add(data);
+            objectMapper.setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
 
             response.send(resp, addPositionResponse, HttpServletResponse.SC_OK);
         } catch (PositionAlreadyExistsException |

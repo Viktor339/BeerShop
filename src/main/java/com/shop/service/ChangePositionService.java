@@ -1,8 +1,8 @@
 package com.shop.service;
 
-import com.shop.model.BeerInfo;
 import com.shop.model.BottleBeerData;
 import com.shop.repository.PositionRepository;
+import com.shop.repository.TransactionalHandler;
 import com.shop.service.exception.PositionNotFoundException;
 import com.shop.service.validator.Validator;
 import com.shop.servlet.dto.ChangePositionResponse;
@@ -17,31 +17,39 @@ public class ChangePositionService {
     private final PositionRepository positionRepository;
     private final List<Validator<ChangePositionRequest>> changePositionRequestValidator;
     private final ValidatorService validatorService;
+    private final TransactionalHandler transactionalHandler;
 
     public ChangePositionService(PositionRepository positionRepository,
                                  ValidatorService validatorService,
-                                 List<Validator<ChangePositionRequest>> changePositionRequestValidator) {
+                                 List<Validator<ChangePositionRequest>> changePositionRequestValidator,
+                                 TransactionalHandler transactionalHandler) {
         this.validatorService = validatorService;
         this.positionRepository = positionRepository;
         this.changePositionRequestValidator = changePositionRequestValidator;
+        this.transactionalHandler = transactionalHandler;
 
     }
 
 
     public ChangePositionResponse change(ChangePositionRequest changePositionRequest) {
 
-        Long id = changePositionRequest.getId();
+        Integer id = changePositionRequest.getId();
         Double containerVolume = changePositionRequest.getContainerVolume();
         Integer quantity = changePositionRequest.getQuantity();
 
         validatorService.validate(changePositionRequestValidator, changePositionRequest);
 
-        if (!positionRepository.existsPositionById(id)) {
-            throw new PositionNotFoundException("Position not found");
-        }
+        BottleBeerData beerInfo = new BottleBeerData(containerVolume, quantity);
 
-        BeerInfo beerInfo = new BottleBeerData(containerVolume, quantity);
-        positionRepository.update(beerInfo, id);
+        transactionalHandler.doTransaction(session -> {
+
+            if (!positionRepository.existsPositionById(id, session)) {
+                throw new PositionNotFoundException("Position not found");
+            }
+
+            positionRepository.update(beerInfo, id, session);
+        });
+
 
         return ChangePositionResponse.builder()
                 .id(id)

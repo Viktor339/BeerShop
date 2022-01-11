@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 @Builder(toBuilder = true)
-public class BottleBeerData implements BeerInfo {
+public class BottleBeerData {
     private Double containerVolume;
     private Integer quantity;
 }

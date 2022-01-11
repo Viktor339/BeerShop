@@ -1,8 +1,10 @@
 package com.shop.service;
 
 import com.shop.config.Config;
-import com.shop.model.BottleBuyBeerQuantity;
+import com.shop.model.BuyBeerQuantity;
+import com.shop.model.Position;
 import com.shop.model.UserTransaction;
+import com.shop.repository.TransactionalHandler;
 import com.shop.repository.UserRepository;
 import com.shop.repository.UserTransactionRepository;
 import com.shop.servlet.dto.GetUserHistoryDto;
@@ -11,11 +13,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,13 +27,13 @@ import static org.mockito.Mockito.when;
 class GetUserHistoryServiceTest {
 
     private GetUserHistoryService getUserHistoryService;
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).withZone(ZoneOffset.UTC);
 
     private final UserTransactionRepository userTransactionRepository = mock(UserTransactionRepository.class);
     private final Config config = mock(Config.class);
     private final UserRepository userRepository = mock(UserRepository.class);
     private final PageService pageService = mock(PageService.class);
     private final Object uuid = 5;
+    private final TransactionalHandler transactionalHandler = new TransactionalHandler();
 
     private List<UserTransaction> userTransactionList;
     private GetUserHistoryResponse getUserHistoryResponse;
@@ -47,17 +46,15 @@ class GetUserHistoryServiceTest {
 
     @BeforeEach
     public void setUp() {
-        getUserHistoryService = new GetUserHistoryService(userTransactionRepository, config, userRepository, pageService);
+        getUserHistoryService = new GetUserHistoryService(userTransactionRepository, config, userRepository, pageService, transactionalHandler);
 
         userTransactionList = List.of(UserTransaction.builder()
-                .positionId(1)
-                .quantity(new BottleBuyBeerQuantity(1))
+                .position(Position.builder().build())
+                .quantity(new BuyBeerQuantity(1))
                 .created(Instant.now())
                 .build());
 
-        List<GetUserHistoryDto> userHistoryDtoList = userTransactionList.stream()
-                .map(n -> new GetUserHistoryDto(n.getPositionId(), n.getQuantity(), formatter.format(n.getCreated())))
-                .collect(Collectors.toList());
+        List<GetUserHistoryDto> userHistoryDtoList = new ArrayList<>();
 
         getUserHistoryResponse = new GetUserHistoryResponse(userHistoryDtoList);
         page = 5;
@@ -70,17 +67,21 @@ class GetUserHistoryServiceTest {
     @Test
     void testGetShouldReturnGetUserHistoryResponse() {
 
-        doNothing().when(pageService).validatePage(page);
-        when(pageService.getSize(any(), any(), any())).thenReturn(validatedPageSize);
-        when(userRepository.getUserIdByUUID(any())).thenReturn(id);
-        when(userTransactionRepository.getTransactionsByUserId(id, validatedPageSize, page)).thenReturn(userTransactionList);
+        transactionalHandler.doTransaction(session -> {
 
-        assertEquals(getUserHistoryResponse, getUserHistoryService.get(pageSize, page, uuid));
-        verify(pageService, times(1)).validatePage(any());
-        verify(pageService, times(1)).getSize(any(), any(), any());
-        verify(userRepository, times(1)).getUserIdByUUID(any());
-        verify(userTransactionRepository, times(1)).getTransactionsByUserId(any(), any(), any());
+            doNothing().when(pageService).validatePage(page);
+            when(pageService.getSize(any(), any(), any())).thenReturn(validatedPageSize);
+            when(userRepository.getUserIdByUUID(new Object(), session)).thenReturn(id);
+            when(userTransactionRepository.getTransactionsByUserId(id, validatedPageSize, page, session)).thenReturn(userTransactionList);
 
+            assertEquals(getUserHistoryResponse, getUserHistoryService.get(pageSize, page, uuid));
+            verify(pageService, times(1)).validatePage(any());
+            verify(pageService, times(1)).getSize(any(), any(), any());
+            verify(userRepository, times(1)).getUserIdByUUID(5, session);
+            verify(userTransactionRepository, times(1)).getTransactionsByUserId(0, 5, 5, session);
+
+            transactionalHandler.beginTransaction();
+        });
     }
 }
 

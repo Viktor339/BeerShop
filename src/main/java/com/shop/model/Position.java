@@ -16,6 +16,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.io.Serializable;
+import java.sql.Timestamp;
 
 @Data
 @Builder(toBuilder = true)
@@ -23,9 +24,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @Entity
 @Table(name = "positions")
-@TypeDefs({
-        @TypeDef(name = "json", typeClass = JsonType.class)
-})
+@TypeDefs({@TypeDef(name = "json", typeClass = JsonType.class)})
 public class Position implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,7 +39,9 @@ public class Position implements Serializable {
     private String containerType;
 
     @Type(type = "json")
-    @Column(name = "beer_Info", columnDefinition = "json")
+    @Column(columnDefinition = "jsonb", name = "beer_info")
     private BeerInfo beerInfo;
+    private Timestamp created;
+    private Timestamp modified;
 
 }

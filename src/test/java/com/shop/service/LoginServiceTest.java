@@ -1,6 +1,7 @@
 package com.shop.service;
 
 import com.shop.model.User;
+import com.shop.repository.TransactionalHandler;
 import com.shop.repository.UserRepository;
 import com.shop.service.exception.UserNotFoundException;
 import com.shop.servlet.request.LoginRequest;
@@ -9,11 +10,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -24,11 +23,12 @@ public class LoginServiceTest {
     private final ValidatorService validatorService = Mockito.mock(ValidatorService.class);
     private LoginRequest loginRequest;
     private LoginService loginService;
+    private final TransactionalHandler transactionalHandler = new TransactionalHandler();
 
     @BeforeEach
     public void setUp() {
         loginRequest = new LoginRequest();
-        loginService = new LoginService(userRepository, new ArrayList<>(), validatorService);
+        loginService = new LoginService(userRepository, new ArrayList<>(), validatorService, transactionalHandler);
 
         loginRequest.setName("name");
         loginRequest.setPassword("123");
@@ -45,10 +45,14 @@ public class LoginServiceTest {
     @Test
     void testLogin() {
 
-        when(userRepository.getUserByNameAndPassword(loginRequest.getName(), loginRequest.getPassword())).thenReturn(Optional.ofNullable(User.builder().build()));
+        transactionalHandler.doTransaction(session -> {
 
-        assertEquals(Optional.ofNullable(User.builder().build()), userRepository.getUserByNameAndPassword(loginRequest.getName(), loginRequest.getPassword()));
-        verify(userRepository, times(1)).getUserByNameAndPassword(any(),any());
+            when(userRepository.getUserByNameAndPassword(loginRequest.getName(), loginRequest.getPassword(), session)).thenReturn(new User());
 
+            assertEquals(new User(), userRepository.getUserByNameAndPassword(loginRequest.getName(), loginRequest.getPassword(), session));
+            verify(userRepository, times(1)).getUserByNameAndPassword("name", "123", session);
+
+            transactionalHandler.beginTransaction();
+        });
     }
 }
