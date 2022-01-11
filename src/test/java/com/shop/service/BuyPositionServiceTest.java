@@ -1,14 +1,16 @@
 package com.shop.service;
 
+import com.shop.model.BuyBeerQuantity;
 import com.shop.model.BuyBottleBeerData;
 import com.shop.model.BuyDraftBeerData;
-import com.shop.model.DraftBuyBeerQuantity;
 import com.shop.repository.PositionRepository;
+import com.shop.repository.TransactionalHandler;
 import com.shop.repository.UserRepository;
 import com.shop.repository.UserTransactionRepository;
 import com.shop.service.exception.ValidatorException;
 import com.shop.service.performer.Performer;
 import com.shop.servlet.dto.BuyPositionDto;
+import com.shop.servlet.dto.PositionDto;
 import com.shop.servlet.request.BuyPositionRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -34,8 +35,10 @@ class BuyPositionServiceTest {
     private Object uuid;
     private List<Performer<BuyPositionRequest, String>> buyBeerDataValidatorPerformer;
     private List<Performer<BuyPositionRequest, List<BuyPositionDto>>> buyBeerPerformer;
-    List<BuyPositionDto> buyPositionDtoList;
-
+    private List<BuyPositionDto> buyPositionDtoList;
+    private final TransactionalHandler transactionalHandler = new TransactionalHandler();
+    private PositionDto positionDto;
+    private BuyPositionDto buyPositionDto;
 
     @BeforeEach
     public void setUp() {
@@ -48,7 +51,12 @@ class BuyPositionServiceTest {
         );
 
         buyPositionRequest = new BuyPositionRequest();
-        buyPositionService = new BuyPositionService(buyBeerPerformer, positionRepository, userTransactionRepository, userRepository, buyBeerDataValidatorPerformer);
+        buyPositionService = new BuyPositionService(buyBeerPerformer,
+                positionRepository,
+                userTransactionRepository,
+                userRepository,
+                buyBeerDataValidatorPerformer,
+                transactionalHandler);
 
         buyPositionRequest.setDraft(List.of(new BuyDraftBeerData(null, 1.0)));
         uuid = 1;
@@ -56,8 +64,12 @@ class BuyPositionServiceTest {
 
         buyPositionDtoList = new ArrayList<>();
 
-        BuyPositionDto buyPositionDto = BuyPositionDto.builder()
-                .quantity(new DraftBuyBeerQuantity(1.0))
+        positionDto = PositionDto.builder().build();
+
+        buyPositionDto = BuyPositionDto.builder()
+                .positionDto(positionDto)
+                .userId(1)
+                .quantity(new BuyBeerQuantity(1.0))
                 .quantityType("BottleBuyBeerQuantity")
                 .build();
 
@@ -85,15 +97,22 @@ class BuyPositionServiceTest {
         buyPositionRequest.setBottle(List.of(new BuyBottleBeerData(1L, 1)));
         buyPositionRequest.setDraft(List.of());
 
-        when(userRepository.getUserIdByUUID(uuid)).thenReturn(1);
-        when(buyBeerPerformer.get(0).isValid(buyPositionRequest)).thenReturn(true);
-        when(buyBeerPerformer.get(0).perform(buyPositionRequest)).thenReturn(buyPositionDtoList);
+        transactionalHandler.doTransaction(session -> {
 
-        buyPositionService.buy(buyPositionRequest, uuid);
+            when(userRepository.getUserIdByUUID(uuid, session)).thenReturn(1);
+            when(buyBeerPerformer.get(0).isValid(buyPositionRequest)).thenReturn(true);
+            when(buyBeerPerformer.get(0).perform(buyPositionRequest)).thenReturn(buyPositionDtoList);
 
-        verify(userRepository, times(1)).getUserIdByUUID(uuid);
-        verify(positionRepository, times(1)).updatePositionAfterPurchase(any());
-        verify(userTransactionRepository, times(1)).save(Mockito.argThat(bpd -> bpd.getUserId() == 1));
+            buyPositionService.buy(buyPositionRequest, uuid);
+
+            verify(userRepository, times(1)).getUserIdByUUID(uuid, session);
+            verify(positionRepository, times(1)).updatePositionAfterPurchase(positionDto, session);
+            verify(userTransactionRepository, times(1)).save(buyPositionDto, session);
+
+            transactionalHandler.beginTransaction();
+
+        });
+
     }
 }
 

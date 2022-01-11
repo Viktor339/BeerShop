@@ -7,6 +7,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class DraftBeerData implements BeerInfo {
+public class DraftBeerData {
     private Double availableLiters;
 }

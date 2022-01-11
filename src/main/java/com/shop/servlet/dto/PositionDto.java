@@ -1,18 +1,18 @@
-package com.shop.servlet.request;
+package com.shop.servlet.dto;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.shop.model.BeerInfo;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class AddPositionRequest {
+@Builder(toBuilder = true)
+public class PositionDto {
 
+    private Integer id;
     private String name;
     private String beerType;
     private Double alcoholPercentage;
     private Integer bitterness;
     private String containerType;
-
     private BeerInfo beerInfo;
 }

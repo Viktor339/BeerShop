@@ -1,11 +1,11 @@
 package com.shop.servlet.action;
 
 import com.shop.config.Config;
-import com.shop.model.BottleBeerData;
+import com.shop.model.BeerInfo;
 import com.shop.model.BuyBottleBeerData;
 import com.shop.model.BuyDraftBeerData;
-import com.shop.model.DraftBeerData;
 import com.shop.repository.PositionRepository;
+import com.shop.repository.TransactionalHandler;
 import com.shop.repository.UserRepository;
 import com.shop.repository.UserTransactionRepository;
 import com.shop.service.AddPositionService;
@@ -64,10 +64,11 @@ public class DoAllServlet extends HttpServlet {
         ObjectMapper objectMapper = new ObjectMapper();
         UserRepository userRepository = new UserRepository();
         Config config = new Config();
-        PositionRepository positionRepository = new PositionRepository(objectMapper, config);
+        PositionRepository positionRepository = new PositionRepository();
         ValidatorService validatorService = new ValidatorService();
-        UserTransactionRepository userTransactionRepository = new UserTransactionRepository(config, objectMapper);
+        UserTransactionRepository userTransactionRepository = new UserTransactionRepository();
         PageService pageService = new PageService();
+        TransactionalHandler transactionalHandler = new TransactionalHandler();
 
         response = new Response(objectMapper);
         postActions = List.of(
@@ -78,14 +79,14 @@ public class DoAllServlet extends HttpServlet {
                                 new NotEmptyFieldValidator<>(RegistrationRequest::getName, "Name is null or empty"),
                                 new EmailValidator(),
                                 new NameValidator()
-                        ), validatorService),
+                        ), validatorService, transactionalHandler),
                         objectMapper,
                         response),
                 new LoginAction(new LoginService(userRepository,
                         List.of(
                                 new NotEmptyFieldValidator<>(LoginRequest::getName, "Name is null or empty"),
                                 new NotEmptyFieldValidator<>(LoginRequest::getPassword, "Password is null or empty")
-                        ), validatorService),
+                        ), validatorService, transactionalHandler),
                         objectMapper,
                         response),
                 new AddPositionAction(new AddPositionService(positionRepository, validatorService,
@@ -102,22 +103,22 @@ public class DoAllServlet extends HttpServlet {
                         List.of(
                                 new DraftBeerPerformer(validatorService,
                                         List.of(
-                                                new NotEmptyFieldValidator<>(DraftBeerData::getAvailableLiters, "Available litres is null or empty")
+                                                new NotEmptyFieldValidator<>(BeerInfo::getAvailableLiters, "Available litres is null or empty")
                                         )),
                                 new BottleBeerPerformer(validatorService,
                                         List.of(
-                                                new NotEmptyFieldValidator<>(BottleBeerData::getContainerVolume, "Container volume is null or empty"),
-                                                new NotEmptyFieldValidator<>(BottleBeerData::getQuantity, "Quantity is null or empty"),
-                                                new ContainerVolumeValidator<>(BottleBeerData::getContainerVolume, config.getMinContainerVolume(), config.getMaxContainerVolume(), "Incorrect container volume")
+                                                new NotEmptyFieldValidator<>(BeerInfo::getContainerVolume, "Container volume is null or empty"),
+                                                new NotEmptyFieldValidator<>(BeerInfo::getQuantity, "Quantity is null or empty"),
+                                                new ContainerVolumeValidator<>(BeerInfo::getContainerVolume, config.getMinContainerVolume(), config.getMaxContainerVolume(), "Incorrect container volume")
                                         ))
                         )
-                ),
+                        , transactionalHandler),
                         objectMapper,
                         response),
                 new BuyPositionAction(new BuyPositionService(
                         List.of(
-                                new BuyBottleBeerPerformer(positionRepository),
-                                new BuyDraftBeerPerformer(positionRepository)
+                                new BuyBottleBeerPerformer(positionRepository, transactionalHandler),
+                                new BuyDraftBeerPerformer(positionRepository, transactionalHandler)
                         ),
                         positionRepository,
                         userTransactionRepository,
@@ -131,7 +132,7 @@ public class DoAllServlet extends HttpServlet {
                                         new NotEmptyFieldValidator<>(BuyBottleBeerData::getId, "Id is null or empty"),
                                         new NotEmptyFieldValidator<>(BuyBottleBeerData::getQuantity, "Quantity is null or empty")
                                 ))
-                        )),
+                        ), transactionalHandler),
                         objectMapper,
                         response)
         );
@@ -144,15 +145,15 @@ public class DoAllServlet extends HttpServlet {
                                 new NotEmptyFieldValidator<>(ChangePositionRequest::getContainerVolume, "Container volume is null or empty"),
                                 new NotEmptyFieldValidator<>(ChangePositionRequest::getQuantity, "Quantity is null or empty"),
                                 new ContainerVolumeValidator<>(ChangePositionRequest::getContainerVolume, config.getMinContainerVolume(), config.getMaxContainerVolume(), "Incorrect container volume")
-                        )),
+                        ), transactionalHandler),
                         objectMapper,
                         response)
         );
 
         getActions = List.of(
-                new GetUserHistoryAction(new GetUserHistoryService(userTransactionRepository, config, userRepository, pageService), response),
-                new GetAllUsersHistoryAction(new GetAllUsersHistoryService(userTransactionRepository, config, pageService), response),
-                new GetAvailablePositionsAction(new GetAvailablePositionsService(positionRepository, config, pageService), response)
+                new GetUserHistoryAction(new GetUserHistoryService(userTransactionRepository, config, userRepository, pageService, transactionalHandler), objectMapper,response),
+                new GetAllUsersHistoryAction(new GetAllUsersHistoryService(userTransactionRepository, config, pageService, transactionalHandler), response),
+                new GetAvailablePositionsAction(new GetAvailablePositionsService(positionRepository, config, pageService, transactionalHandler), response)
         );
     }
 

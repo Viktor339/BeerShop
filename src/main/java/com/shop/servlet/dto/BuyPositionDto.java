@@ -1,7 +1,6 @@
 package com.shop.servlet.dto;
 
-import com.shop.model.Position;
-import com.shop.model.UserTransaction;
+import com.shop.model.BuyBeerQuantity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,8 +11,8 @@ import lombok.RequiredArgsConstructor;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 public class BuyPositionDto {
-    private Position position;
+    private PositionDto positionDto;
     private Integer userId;
-    private Object quantity;
+    private BuyBeerQuantity quantity;
     private String quantityType;
 }

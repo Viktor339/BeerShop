@@ -1,8 +1,8 @@
-create table positions
+create table if not exists positions
 (
     id serial not null
-        constraint positions_pk
-            primary key,
+    constraint positions_pk
+    primary key,
     name varchar not null,
     container_type varchar,
     beer_type varchar not null,
@@ -10,7 +10,9 @@ create table positions
     bitterness integer not null,
     created timestamp,
     modified timestamp,
-    beer_info json
-);
+    beer_info jsonb,
+    constraint positions_name_container_type_key
+    unique (name, container_type)
+    );
 
 alter table positions owner to postgres;

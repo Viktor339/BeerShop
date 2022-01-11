@@ -1,8 +1,8 @@
 package com.shop.service;
 
-import com.shop.model.BottleBeerData;
-import com.shop.model.DraftBeerData;
+import com.shop.model.BeerInfo;
 import com.shop.repository.PositionRepository;
+import com.shop.repository.TransactionalHandler;
 import com.shop.service.exception.BeerPositionExecutorNotFoundException;
 import com.shop.service.exception.PositionAlreadyExistsException;
 import com.shop.service.performer.Performer;
@@ -15,14 +15,12 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AddPositionServiceTest {
@@ -35,8 +33,10 @@ class AddPositionServiceTest {
     private final List<Validator<AddPositionRequest>> positionRequestValidator = new ArrayList<>();
     private AddPositionRequest addPositionRequest;
     private AddPositionService addPositionService;
-    private AddPositionDto addPositionDto;
     private AddPositionResponse addPositionResponse;
+    private final AtomicReference<AddPositionDto> addPositionDtoAtomic = new AtomicReference<>();
+    private AddPositionDto addPositionDto;
+    private final TransactionalHandler transactionalHandler = new TransactionalHandler();
 
 
     @BeforeEach
@@ -45,12 +45,12 @@ class AddPositionServiceTest {
         beerPositionPerformer = List.of(
                 (Performer<AddPositionRequest, AddPositionDto>) mock(Performer.class));
 
-        addPositionService = new AddPositionService(positionRepository, validatorService, positionRequestValidator, beerPositionPerformer);
+        addPositionService = new AddPositionService(positionRepository, validatorService, positionRequestValidator, beerPositionPerformer, transactionalHandler);
 
         addPositionRequest = new AddPositionRequest();
         addPositionRequest.setName("name");
         addPositionRequest.setContainerType("type");
-        addPositionRequest.setBeerInfo(new DraftBeerData(2.0));
+        addPositionRequest.setBeerInfo(new BeerInfo(2.0));
 
         addPositionDto = AddPositionDto.builder()
                 .id(1)
@@ -59,42 +59,57 @@ class AddPositionServiceTest {
                 .alcoholPercentage(2.6)
                 .bitterness(1)
                 .containerType("containerType")
-                .beerInfo(new BottleBeerData(2.0, 1))
+                .beerInfo(new BeerInfo(2.0, 1))
                 .build();
 
+        addPositionDtoAtomic.set(addPositionDto);
+
         addPositionResponse = AddPositionResponse.builder()
-                .id(addPositionDto.getId())
-                .name(addPositionDto.getName())
-                .beerType(addPositionDto.getBeerType())
-                .alcoholPercentage(addPositionDto.getAlcoholPercentage())
-                .bitterness(addPositionDto.getBitterness())
-                .containerType(addPositionDto.getContainerType())
-                .beerInfo(addPositionDto.getBeerInfo())
+                .id(addPositionDtoAtomic.get().getId())
+                .name(addPositionDtoAtomic.get().getName())
+                .beerType(addPositionDtoAtomic.get().getBeerType())
+                .alcoholPercentage(addPositionDtoAtomic.get().getAlcoholPercentage())
+                .bitterness(addPositionDtoAtomic.get().getBitterness())
+                .containerType(addPositionDtoAtomic.get().getContainerType())
+                .beerInfo(addPositionDtoAtomic.get().getBeerInfo())
                 .build();
 
     }
-
 
     @Test
     void testAddShouldThrowPositionAlreadyExistsException() {
 
         doNothing().when(validatorService).validate(positionRequestValidator, addPositionRequest);
-        when(positionRepository.existsPositionByNameAndContainerType(addPositionRequest.getName(), addPositionRequest.getContainerType()))
-                .thenThrow(new PositionAlreadyExistsException("Position already exists"));
 
-        assertThrows(PositionAlreadyExistsException.class, () ->
-                addPositionService.add(addPositionRequest));
+        assertThrows(PositionAlreadyExistsException.class,
+                () -> transactionalHandler.doTransaction(session -> {
+
+                    when(positionRepository.existsPositionByNameAndContainerType(addPositionRequest.getName(),
+                            addPositionRequest.getContainerType(),
+                            session)).thenReturn(true);
+
+                    addPositionService.add(addPositionRequest);
+
+                }));
     }
 
     @Test
     void testAddShouldThrowBeerPositionExecutorNotFoundException() {
 
         doNothing().when(validatorService).validate(positionRequestValidator, addPositionRequest);
-        when(positionRepository.existsPositionByNameAndContainerType(any(), any())).thenReturn(false);
 
-        assertThrows(BeerPositionExecutorNotFoundException.class, () ->
-                addPositionService.add(addPositionRequest));
+        assertThrows(BeerPositionExecutorNotFoundException.class,
+                () -> transactionalHandler.doTransaction(session -> {
+
+                    when(positionRepository.existsPositionByNameAndContainerType(addPositionRequest.getName(),
+                            addPositionRequest.getContainerType(),
+                            session)).thenReturn(false);
+
+                    addPositionService.add(addPositionRequest);
+
+                }));
     }
+
 
     @Test
     void testAddShouldReturnAddPositionResponse() {
@@ -102,16 +117,17 @@ class AddPositionServiceTest {
         addPositionRequest.setName("name");
         addPositionRequest.setContainerType("draft");
 
-        doNothing().when(validatorService).validate(positionRequestValidator, addPositionRequest);
-        when(positionRepository.existsPositionByNameAndContainerType(any(), any())).thenReturn(false);
-        when(positionRepository.save(any())).thenReturn(addPositionDto);
-        when(beerPositionPerformer.get(0).isValid(addPositionRequest.getContainerType())).thenReturn(true);
-        when(beerPositionPerformer.get(0).perform(addPositionRequest)).thenReturn(addPositionDto);
+        transactionalHandler.doTransaction(session -> {
 
-        assertEquals(addPositionResponse, addPositionService.add(addPositionRequest));
-        verify(validatorService, times(1)).validate(any(), any());
-        verify(positionRepository, times(1)).existsPositionByNameAndContainerType(any(), any());
-        verify(positionRepository, times(1)).save(any());
+            when(positionRepository.existsPositionByNameAndContainerType("name", "type", session)).thenReturn(false);
+            when(positionRepository.save(addPositionDto, session)).thenReturn(addPositionDto);
+            when(beerPositionPerformer.get(0).isValid(addPositionRequest.getContainerType())).thenReturn(true);
+            when(beerPositionPerformer.get(0).perform(addPositionRequest)).thenReturn(addPositionDto);
+
+            assertEquals(addPositionResponse,
+                    addPositionService.add(addPositionRequest));
+            transactionalHandler.beginTransaction();
+        });
 
     }
 }

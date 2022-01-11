@@ -3,6 +3,7 @@ package com.shop.service;
 import com.shop.config.Config;
 import com.shop.model.Position;
 import com.shop.repository.PositionRepository;
+import com.shop.repository.TransactionalHandler;
 import com.shop.servlet.dto.GetAvailablePositionsDto;
 import com.shop.servlet.dto.GetAvailablePositionsResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +26,7 @@ public class GetAvailablePositionsServiceTest {
     private final PageService pageService = mock(PageService.class);
     private GetAvailablePositionsService getAvailablePositionsService;
     private GetAvailablePositionsResponse getAvailablePositionsResponse;
+    private final TransactionalHandler transactionalHandler = new TransactionalHandler();
 
     private List<Position> positionList;
     private Integer pageSize;
@@ -35,7 +37,7 @@ public class GetAvailablePositionsServiceTest {
     @BeforeEach
     public void setUp() {
 
-        getAvailablePositionsService = new GetAvailablePositionsService(positionRepository, config, pageService);
+        getAvailablePositionsService = new GetAvailablePositionsService(positionRepository, config, pageService,transactionalHandler);
 
         Position position = Position.builder()
                 .id(1)
@@ -55,15 +57,20 @@ public class GetAvailablePositionsServiceTest {
 
     @Test
     void testGet() {
-        doNothing().when(pageService).validatePage(page);
 
-        when(pageService.getSize(pageSize, config.getMinUsersHistoryPurchasePageSize(), config.getMaxUsersHistoryPurchasePageSize())).thenReturn(validatedPage);
-        when(positionRepository.getPositionByBeerInfo(validatedPage, page)).thenReturn(positionList);
+        transactionalHandler.doTransaction(session -> {
 
-        assertEquals(getAvailablePositionsResponse, getAvailablePositionsService.get(pageSize, page));
-        verify(pageService, times(1)).validatePage(any());
-        verify(pageService, times(1)).getSize(any(), any(), any());
-        verify(positionRepository, times(1)).getPositionByBeerInfo(any(), any());
+            doNothing().when(pageService).validatePage(page);
 
+            when(pageService.getSize(pageSize, config.getMinUsersHistoryPurchasePageSize(), config.getMaxUsersHistoryPurchasePageSize())).thenReturn(validatedPage);
+            when(positionRepository.getPositionByBeerInfo(validatedPage, page,session)).thenReturn(positionList);
+
+            assertEquals(getAvailablePositionsResponse, getAvailablePositionsService.get(pageSize, page));
+            verify(pageService, times(1)).validatePage(any());
+            verify(pageService, times(1)).getSize(any(), any(), any());
+
+            transactionalHandler.beginTransaction();
+
+        });
     }
 }

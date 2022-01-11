@@ -1,13 +1,15 @@
 package com.shop.model;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class BottleBeerData implements BeerInfo {
+@Builder(toBuilder = true)
+public class BottleBeerData {
     private Double containerVolume;
     private Integer quantity;
 }

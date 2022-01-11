@@ -14,7 +14,7 @@ public class NameValidator implements Validator<RegistrationRequest> {
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(value.getName());
 
-        return !matcher.matches();
+        return matcher.matches();
     }
 
 

@@ -1,120 +1,60 @@
 package com.shop.repository;
 
-import com.shop.config.Config;
 import com.shop.model.User;
-import com.shop.service.exception.UnableToExecuteQueryException;
-import com.shop.service.exception.UnableToGetConnectionException;
+import com.shop.service.exception.UserNotFoundException;
+import org.hibernate.Session;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Optional;
+import java.util.List;
 
 public class UserRepository {
 
     private static final String SELECT_USER_BY_NAME_AND_PASSWORD = "select * from users where name=? and password=?";
     private static final String SELECT_USERID_BY_UUID = "select * from users where uuid=? ";
-    private static final String SAVE_USER = "insert into users (name,password,email,uuid,role) values (?,?,?,?,?)";
-    private static final String SAVE_USER_BY_NAME_OR_EMAIL = "select * from users where name =? or email= ?";
-    private static final String NAME = "name";
-    private static final String EMAIL = "email";
-    private static final String PASSWORD = "password";
-    private static final String ROLE = "role";
-    private static final String UUID = "uuid";
-    private static final String ID = "id";
-    private final Config config;
+    private static final String SELECT_USER_BY_NAME_OR_EMAIL = "select * from users where name =? or email= ?";
 
-    public UserRepository() {
-        config = new Config();
-    }
+    public boolean existsUserByNameOrEmail(String name, String email, Session session) {
 
-    protected Connection getConnection() {
-        try {
-            return DataSource.getInstance(config).getConnection();
-        } catch (SQLException e) {
-            throw new UnableToGetConnectionException(e.getMessage());
-        }
-    }
+        List<User> userList = session.createNativeQuery(SELECT_USER_BY_NAME_OR_EMAIL, User.class)
+                .setParameter(1, name)
+                .setParameter(2, email)
+                .list();
 
-    public boolean existsUserByNameOrEmail(String name, String email) {
-
-        try {
-            Connection connection = getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(SAVE_USER_BY_NAME_OR_EMAIL);
-            preparedStatement.setString(1, name);
-            preparedStatement.setString(2, email);
-
-            ResultSet rs = preparedStatement.executeQuery();
-
-            return rs.next();
-        } catch (SQLException e) {
-            throw new UnableToExecuteQueryException(e.getMessage());
-        }
+        return !userList.isEmpty();
     }
 
 
-    public void saveUser(String name, String password, String email, String uuid, String role) {
+    public void saveUser(String name, String password, String email, String uuid, String role, Session session) {
 
-        try {
-            Connection connection = getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(SAVE_USER);
-            preparedStatement.setString(1, name);
-            preparedStatement.setString(2, password);
-            preparedStatement.setString(3, email);
-            preparedStatement.setString(4, uuid);
-            preparedStatement.setString(5, role);
-
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new UnableToExecuteQueryException(e.getMessage());
-        }
+        session.save(User.builder()
+                .name(name)
+                .password(password)
+                .email(email)
+                .UUID(uuid)
+                .role(role)
+                .build());
     }
 
 
-    public Optional<User> getUserByNameAndPassword(String name, String password) {
+    public User getUserByNameAndPassword(String name, String password, Session session) {
 
-        try {
-            User user = null;
+        User user = session.createNativeQuery(SELECT_USER_BY_NAME_AND_PASSWORD, User.class)
+                .setParameter(1, name)
+                .setParameter(2, password)
+                .getSingleResult();
 
-            Connection connection = getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(SELECT_USER_BY_NAME_AND_PASSWORD);
-            preparedStatement.setString(1, name);
-            preparedStatement.setString(2, password);
-
-            ResultSet rs = preparedStatement.executeQuery();
-            while (rs.next()) {
-                user = User.builder()
-                        .name(rs.getString(NAME))
-                        .password(rs.getString(PASSWORD))
-                        .email(rs.getString(EMAIL))
-                        .role(rs.getString(ROLE))
-                        .UUID(rs.getString(UUID))
-                        .build();
-            }
-            return Optional.ofNullable(user);
-
-        } catch (SQLException e) {
-            throw new UnableToExecuteQueryException(e.getMessage());
+        if (user == null) {
+            throw new UserNotFoundException("Incorrect username or password");
         }
+        return user;
     }
 
-    public Integer getUserIdByUUID(Object uuid) {
 
-        try {
-            Integer id = null;
-            Connection connection = getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(SELECT_USERID_BY_UUID);
-            preparedStatement.setObject(1, uuid);
+    public Integer getUserIdByUUID(Object uuid, Session session) {
 
-            ResultSet rs = preparedStatement.executeQuery();
-            while (rs.next()) {
-                id = rs.getInt(ID);
-            }
-            return id;
+        User user = session.createNativeQuery(SELECT_USERID_BY_UUID, User.class)
+                .setParameter(1, uuid)
+                .getSingleResult();
 
-        } catch (SQLException e) {
-            throw new UnableToExecuteQueryException(e.getMessage());
-        }
+        return user.getId();
     }
 }

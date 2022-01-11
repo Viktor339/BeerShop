@@ -1,10 +1,9 @@
 package com.shop.service.performer;
 
-import com.shop.model.DraftBeerData;
+import com.shop.model.BeerInfo;
 import com.shop.service.ValidatorService;
 import com.shop.service.validator.Validator;
 import com.shop.servlet.dto.AddPositionDto;
-import com.shop.servlet.dto.AddPositionResponse;
 import com.shop.servlet.request.AddPositionRequest;
 import lombok.RequiredArgsConstructor;
 
@@ -13,7 +12,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DraftBeerPerformer implements Performer<AddPositionRequest, AddPositionDto> {
     private final ValidatorService validatorService;
-    private final List<Validator<DraftBeerData>> draftBeerValidator;
+    private final List<Validator<BeerInfo>> draftBeerValidator;
 
     @Override
     public boolean isValid(Object value) {
@@ -23,10 +22,8 @@ public class DraftBeerPerformer implements Performer<AddPositionRequest, AddPosi
     @Override
     public AddPositionDto perform(AddPositionRequest addPositionRequest) {
 
-        DraftBeerData draftBeerData = (DraftBeerData) addPositionRequest.getBeerInfo();
+        BeerInfo draftBeerData = addPositionRequest.getBeerInfo();
         validatorService.validate(draftBeerValidator, draftBeerData);
-
-
 
         return AddPositionDto.builder()
                 .name(addPositionRequest.getName())
@@ -34,7 +31,7 @@ public class DraftBeerPerformer implements Performer<AddPositionRequest, AddPosi
                 .alcoholPercentage(addPositionRequest.getAlcoholPercentage())
                 .bitterness(addPositionRequest.getBitterness())
                 .containerType(addPositionRequest.getContainerType())
-                .beerInfo(new DraftBeerData(draftBeerData.getAvailableLiters()))
+                .beerInfo(new BeerInfo(draftBeerData.getAvailableLiters()))
                 .build();
     }
 }

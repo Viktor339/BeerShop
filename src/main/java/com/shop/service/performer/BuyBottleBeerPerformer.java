@@ -1,22 +1,29 @@
 package com.shop.service.performer;
 
+import com.shop.model.BeerInfo;
 import com.shop.model.BottleBeerData;
-import com.shop.model.BottleBuyBeerQuantity;
+import com.shop.model.BuyBeerQuantity;
 import com.shop.model.BuyBottleBeerData;
-import com.shop.model.Position;
 import com.shop.repository.PositionRepository;
+import com.shop.repository.TransactionalHandler;
 import com.shop.service.exception.AvailableQuantityExceededException;
 import com.shop.service.exception.PositionNotFoundException;
 import com.shop.servlet.dto.BuyPositionDto;
+import com.shop.servlet.dto.PositionDto;
 import com.shop.servlet.request.BuyPositionRequest;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Session;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 @RequiredArgsConstructor
+@AllArgsConstructor
 public class BuyBottleBeerPerformer implements Performer<BuyPositionRequest, List<BuyPositionDto>> {
     private final PositionRepository positionRepository;
+    private TransactionalHandler transactionalHandler;
 
     @Override
     public boolean isValid(Object value) {
@@ -30,10 +37,13 @@ public class BuyBottleBeerPerformer implements Performer<BuyPositionRequest, Lis
 
         for (BuyBottleBeerData bottleBeer : value.getBottle()) {
 
-            Position position = positionRepository.findPositionById(bottleBeer.getId(), BottleBeerData.class)
-                    .orElseThrow(() -> new PositionNotFoundException("Position not found"));
+            AtomicReference<PositionDto> positionDto = new AtomicReference<>();
 
-            BottleBeerData bottleBeerData = (BottleBeerData) position.getBeerInfo();
+            Session session = transactionalHandler.getCurrentSession();
+            positionDto.set(positionRepository.findPositionById(bottleBeer.getId(), session)
+                    .orElseThrow(() -> new PositionNotFoundException("Position not found")));
+
+            BeerInfo bottleBeerData = positionDto.get().getBeerInfo();
             Integer quantity = bottleBeerData.getQuantity();
 
             if (quantity < bottleBeer.getQuantity()) {
@@ -41,11 +51,11 @@ public class BuyBottleBeerPerformer implements Performer<BuyPositionRequest, Lis
             }
 
             bottleBeerData.setQuantity(quantity - bottleBeer.getQuantity());
-            position.setBeerInfo(bottleBeerData);
+            positionDto.get().setBeerInfo(bottleBeerData);
 
             BuyPositionDto buyPositionDto = BuyPositionDto.builder()
-                    .position(position)
-                    .quantity(new BottleBuyBeerQuantity(bottleBeer.getQuantity()))
+                    .positionDto(positionDto.get())
+                    .quantity(new BuyBeerQuantity(bottleBeer.getQuantity()))
                     .quantityType("BottleBuyBeerQuantity")
                     .build();
 

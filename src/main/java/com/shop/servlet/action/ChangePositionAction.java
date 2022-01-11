@@ -9,6 +9,7 @@ import com.shop.servlet.dto.InformationResponse;
 import com.shop.servlet.request.ChangePositionRequest;
 import lombok.RequiredArgsConstructor;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -35,6 +36,7 @@ public class ChangePositionAction implements Action {
             ChangePositionResponse changePositionResponse = changePositionService.change(changePositionRequest);
 
             response.send(resp, changePositionResponse, HttpServletResponse.SC_OK);
+            objectMapper.setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
 
         } catch (PositionNotFoundException |
                 ValidatorException e) {

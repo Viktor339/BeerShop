@@ -13,5 +13,5 @@ public class AddPositionDto {
     private final Double alcoholPercentage;
     private final Integer bitterness;
     private final String containerType;
-    private final BeerInfo beerInfo;
+    private BeerInfo beerInfo;
 }
